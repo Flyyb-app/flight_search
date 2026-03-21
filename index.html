@@ -884,7 +884,7 @@ const HUBS=['DXB','AMS','FRA','DOH','SIN','HKG','ICN','CDG','LHR','ORD','ATL','D
 // Update badge to show Live Data
 window.addEventListener('DOMContentLoaded', () => {
   const badge = document.getElementById('api-badge');
-  if (badge) { badge.textContent = '&#x25CF; Live Data'; badge.classList.add('live'); }
+  if (badge) { badge.textContent = '● Live Data'; badge.classList.add('live'); }
 });
 let FA=null,TA=null,tripType='round',selTransit=null,flights=[],curFlight=null;
 let authUser=null, authToken=null, lMode='email', rMode='email', payStep=1, selSeats=[];
@@ -1210,7 +1210,7 @@ async function doVerifyOTP(){
         <div class="reg-success-title">Account Verified!</div>
         <p class="reg-success-msg">Welcome to FLYYB, ${data.user.name}!<br>Your FLYYB ID: <span style="color:var(--gold);font-family:'DM Mono',monospace">${data.user.flyybId}</span></p>
         <div class="reg-success-btns">
-          <button class="reg-proceed-btn" onclick="proceedAfterReg(${JSON.stringify(data).split('"').join('&quot;')})">PROCEED AS LOGGED IN &rarr;</button>
+          <button class="reg-proceed-btn" onclick="proceedAfterReg(${JSON.stringify(data).split('"').join('"')})">PROCEED AS LOGGED IN →</button>
           <button class="auth-social" onclick="dismissRegSuccess()">Continue as Visitor</button>
         </div>
       </div>`;
@@ -1260,7 +1260,7 @@ function resetRegForm(){
       <div class="af"><label>Full Name<span class="req">*</span></label><input type="text" id="r-name" placeholder="Jane Smith"></div>
       <div class="af"><label>Email Address<span class="req">*</span></label><input type="email" id="r-email" placeholder="you@example.com"></div>
       <div class="af"><label>Password<span class="req">*</span></label><input type="password" id="r-pass" placeholder="Min. 8 characters"></div>
-      <div class="af"><label>Confirm Password<span class="req">*</span></label><input type="password" id="r-pass2" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+      <div class="af"><label>Confirm Password<span class="req">*</span></label><input type="password" id="r-pass2" placeholder="••••••••"></div>
       <div class="af"><label>Default Currency<span class="req">*</span></label>
         <select id="r-currency" class="field-select">
           <option value="">Select currency...</option>
@@ -1323,7 +1323,7 @@ function renderNavUser(){
               <div class="user-dropdown-item" onclick="openTrips()">✈ My Trips</div>
               <div class="user-dropdown-item" onclick="openCreditsModal()">✦ My Credits</div>
               <div class="user-dropdown-item" onclick="openProfile()">⚙ Profile & Settings</div>
-              <div class="user-dropdown-item danger" onclick="logout()">&#x238B; Sign Out</div>
+              <div class="user-dropdown-item danger" onclick="logout()">⎋ Sign Out</div>
             </div>
           </div>
         </div>`;
@@ -1368,7 +1368,7 @@ function stopsChange(v){
 function renderChips(){
   const hubNames={DXB:'Dubai',AMS:'Amsterdam',FRA:'Frankfurt',DOH:'Doha',SIN:'Singapore',HKG:'Hong Kong',ICN:'Seoul',CDG:'Paris',LHR:'London',ORD:'Chicago',ATL:'Atlanta',DFW:'Dallas',JFK:'New York',LAX:'Los Angeles',NRT:'Tokyo'};
   document.getElementById('t-chips').innerHTML=HUBS.map(c=>{
-    return `<div class="t-chip${selTransit===c?' selected':''}" onclick="pickTransit('${c}')">${c} &middot; ${hubNames[c]||c}</div>`;
+    return `<div class="t-chip${selTransit===c?' selected':''}" onclick="pickTransit('${c}')">${c} · ${hubNames[c]||c}</div>`;
   }).join('');
 }
 function pickTransit(c){selTransit=selTransit===c?null:c;renderChips()}
@@ -1461,15 +1461,15 @@ function renderRoundTrip(outFlights, retFlights, from, to, dep, ret) {
   const c = document.getElementById('rc');
   let h = `
     <div class="results-header" style="margin-bottom:8px">
-      <div class="results-title">${from.city} &rarr; ${to.city}</div>
-      <div class="results-count">${outFlights.length} outbound &middot; ${dep}</div>
+      <div class="results-title">${from.city} → ${to.city}</div>
+      <div class="results-count">${outFlights.length} outbound · ${dep}</div>
     </div>`;
   outFlights.forEach(f => { h += buildFlightCard(f, from, to, dep); });
 
   h += `
     <div class="results-header" style="margin-top:24px;margin-bottom:8px">
-      <div class="results-title">${to.city} &rarr; ${from.city}</div>
-      <div class="results-count">${retFlights.length} return &middot; ${ret}</div>
+      <div class="results-title">${to.city} → ${from.city}</div>
+      <div class="results-count">${retFlights.length} return · ${ret}</div>
     </div>`;
   if (retFlights.length) {
     retFlights.forEach(f => { h += buildFlightCard(f, to, from, ret); });
@@ -1500,13 +1500,13 @@ function buildFlightCard(f, from, to, dep) {
       <div class="time-block"><div class="time">${f.arrival}</div><div class="time-airport">${f.destination?.code||to.code}</div></div>
     </div>
     <div class="extras"><div class="cabin-lbl">${f.cabin.charAt(0).toUpperCase()+f.cabin.slice(1)}</div>${seat}</div>
-    <div class="price-col"><div class="price">${f.price?.symbol||'$'}${f.price?.perPerson?.toLocaleString()}</div><div class="price-label">per person &middot; ${f.price?.currency||'USD'}</div><button class="select-btn">Select &rarr;</button></div>
+    <div class="price-col"><div class="price">${f.price?.symbol||'$'}${f.price?.perPerson?.toLocaleString()}</div><div class="price-label">per person · ${f.price?.currency||'USD'}</div><button class="select-btn">Select →</button></div>
   </div>`;
 }
 
 function renderFlights(fs, from, to, dep) {
   const c = document.getElementById('rc');
-  let h = `<div class="results-header"><div class="results-title">${from.city} &rarr; ${to.city}</div><div class="results-count">${fs.length} flights &middot; ${dep}</div></div>`;
+  let h = `<div class="results-header"><div class="results-title">${from.city} → ${to.city}</div><div class="results-count">${fs.length} flights · ${dep}</div></div>`;
   fs.forEach(f => { h += buildFlightCard(f, from, to, dep); });
   c.innerHTML = h;
   setTimeout(() => document.querySelectorAll('.flight-card').forEach((el, i) => setTimeout(() => el.classList.add('revealed'), i * 60)), 50);
@@ -1526,13 +1526,13 @@ function calcLayover(arr, dep) {
 function showFlight(idx) {
   curFlight = flights[idx];
   const f = curFlight;
-  document.getElementById('fm-al').textContent = `${f.airline?.name} &middot; ${f.flightNumber}`;
-  document.getElementById('fm-rt').textContent = `${f.origin?.code} &rarr; ${f.destination?.code}`;
+  document.getElementById('fm-al').textContent = `${f.airline?.name} · ${f.flightNumber}`;
+  document.getElementById('fm-rt').textContent = `${f.origin?.code} → ${f.destination?.code}`;
   document.getElementById('fm-pr').textContent = `${f.price?.symbol||'$'}${f.price?.perPerson?.toLocaleString()} ${f.price?.currency||'USD'}`;
   const st = f.stops === 0 ? 'Nonstop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`;
   const layover = f.via ? calcLayover(f.via.arr, f.via.dep) : null;
   const viaHtml = f.via
-    ? `${f.via.code} &middot; ${f.via.city}${layover ? `<br><span style="font-size:.7rem;color:rgba(245,240,232,.4)">Layover: ${layover}</span>` : ''}`
+    ? `${f.via.code} · ${f.via.city}${layover ? `<br><span style="font-size:.7rem;color:rgba(245,240,232,.4)">Layover: ${layover}</span>` : ''}`
     : '-';
   document.getElementById('fm-dets').innerHTML = `
     <div class="fm-item"><label>Departure</label><span>${f.departure}</span></div>
@@ -1711,7 +1711,7 @@ function buildPaxForms(){
         <div class="profile-avatar">${p.firstName[0]}${p.lastName[0]}</div>
         <div class="profile-info">
           <div class="profile-name">${p.firstName} ${p.lastName}</div>
-          <div class="profile-detail">${p.passportNo||'No passport saved'} ${p.dob?'&middot; DOB: '+p.dob:''}</div>
+          <div class="profile-detail">${p.passportNo||'No passport saved'} ${p.dob?'· DOB: '+p.dob:''}</div>
         </div>
         ${p.isPrimary?'<span class="profile-primary">Primary</span>':''}
       </div>`;
@@ -1790,7 +1790,7 @@ function buildSeats(){
     });
   }
   document.getElementById('sg').innerHTML=h;
-  document.getElementById('si').textContent=`${selSeats.length} of ${n} seat${n>1?'s':''} selected${selSeats.length?' &middot; '+selSeats.join(', '):''}`;
+  document.getElementById('si').textContent=`${selSeats.length} of ${n} seat${n>1?'s':''} selected${selSeats.length?' · '+selSeats.join(', '):''}`;
 }
 function toggleSeat(id,max){selSeats.includes(id)?selSeats=selSeats.filter(s=>s!==id):selSeats.length<max&&selSeats.push(id);buildSeats()}
 
@@ -1857,8 +1857,8 @@ function buildSummary(){
   const total=Math.max(0,subtotal-creditsApplied);
 
   let h=`
-    <div class="sum-row"><div class="sum-lbl">${f.origin?.code} &rarr; ${f.destination?.code} &middot; ${f.airline?.name} ${f.flightNumber}</div></div>
-    <div class="sum-row"><div class="sum-lbl">$${f.price.perPerson.toLocaleString()} &times; ${n} passenger${n>1?'s':''}</div><div class="sum-val">$${base.toLocaleString()}</div></div>`;
+    <div class="sum-row"><div class="sum-lbl">${f.origin?.code} → ${f.destination?.code} · ${f.airline?.name} ${f.flightNumber}</div></div>
+    <div class="sum-row"><div class="sum-lbl">$${f.price.perPerson.toLocaleString()} × ${n} passenger${n>1?'s':''}</div><div class="sum-val">$${base.toLocaleString()}</div></div>`;
   if(addonsTotal>0)h+=`<div class="sum-row"><div class="sum-lbl">Add-ons</div><div class="sum-val">$${addonsTotal.toFixed(2)}</div></div>`;
   if(creditsApplied>0)h+=`<div class="sum-row"><div class="sum-lbl" style="color:#5daa72">Credits applied</div><div class="sum-val" style="color:#5daa72">-$${creditsApplied.toFixed(2)}</div></div>`;
   h+=`<div class="sum-row sum-total"><div class="sum-lbl">Total Due</div><div class="sum-val">$${total.toFixed(2)}</div></div>`;
@@ -1871,7 +1871,7 @@ function buildSummary(){
       <div class="credits-apply">
         <div class="credits-apply-info">
           <div class="credits-apply-label">✦ FLYYB Credits</div>
-          <div class="credits-apply-val">Balance: $${userCredits.toFixed(2)} &middot; Max apply: $${maxRedeem.toFixed(2)}</div>
+          <div class="credits-apply-val">Balance: $${userCredits.toFixed(2)} · Max apply: $${maxRedeem.toFixed(2)}</div>
         </div>
         <button class="credits-toggle ${applyCredits?'active':''}" onclick="toggleCredits()">
           ${applyCredits?'Applied ✓':'Apply'}
@@ -2046,12 +2046,12 @@ async function loadTrips(status,btn){
           <div class="trip-ref">${t.bookingRef}</div>
           <span class="trip-status ${t.status}">${t.status}</span>
         </div>
-        <div class="trip-route">${t.origin?.code} &rarr; ${t.destination?.code}</div>
+        <div class="trip-route">${t.origin?.code} → ${t.destination?.code}</div>
         <div class="trip-meta">
-          ${t.flight?.airline?.name} &middot; ${t.flight?.number} &middot; 
-          ${new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} &middot; 
-          ${t.departure}-${t.arrival} &middot; 
-          ${t.cabin.charAt(0).toUpperCase()+t.cabin.slice(1)} &middot; 
+          ${t.flight?.airline?.name} · ${t.flight?.number} · 
+          ${new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} · 
+          ${t.departure}-${t.arrival} · 
+          ${t.cabin.charAt(0).toUpperCase()+t.cabin.slice(1)} · 
           $${t.total?.toFixed(2)}
         </div>
         ${t.status==='confirmed'?`
@@ -2222,7 +2222,7 @@ async function loadProfileContent() {
           <div class="profile-avatar">${p.firstName[0]}${p.lastName[0]}</div>
           <div class="profile-info">
             <div class="profile-name">${p.firstName} ${p.lastName}</div>
-            <div class="profile-detail">${p.passportNo||'No passport'} ${p.dob?'&middot; '+p.dob:''}</div>
+            <div class="profile-detail">${p.passportNo||'No passport'} ${p.dob?'· '+p.dob:''}</div>
           </div>
           ${p.isPrimary?'<span class="profile-primary">Primary</span>':''}
           <button onclick="deletePassenger(${p.id})" style="background:none;border:none;color:rgba(181,69,27,.6);cursor:pointer;font-size:.8rem;margin-left:8px">✕</button>
@@ -2266,9 +2266,9 @@ async function loadProfileContent() {
         <div>
           <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:12px">Change Password</div>
           <div class="pax-form">
-            <div class="pf full"><label>Current Password</label><input type="password" id="pw-current" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+            <div class="pf full"><label>Current Password</label><input type="password" id="pw-current" placeholder="••••••••"></div>
             <div class="pf"><label>New Password</label><input type="password" id="pw-new" placeholder="Min. 8 chars"></div>
-            <div class="pf"><label>Confirm New</label><input type="password" id="pw-confirm" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+            <div class="pf"><label>Confirm New</label><input type="password" id="pw-confirm" placeholder="••••••••"></div>
           </div>
           <div class="msg-err" id="pw-err" style="margin-top:8px"></div>
           <button class="p-next" style="margin-top:12px;background:rgba(255,255,255,.08)" onclick="changePassword()">UPDATE PASSWORD</button>
@@ -2541,7 +2541,7 @@ function downloadBookingPDF() {
       + '<table><thead><tr><th>#</th><th>Name</th><th>Date of Birth</th></tr></thead>'
       + '<tbody>'+paxRows+'</tbody></table></div>' : '')
     + (creditsMsg ? '<div class="credits-row">'+creditsMsg+'</div>' : '')
-    + '<div class="footer">Generated by FLYYB &middot; flyyb.vercel.app &middot; '
+    + '<div class="footer">Generated by FLYYB · flyyb.vercel.app · '
     + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
     + '<br>Please carry this confirmation to the airport. Safe travels! ✈</div>'
     + '</body></html>';
