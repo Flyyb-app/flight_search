@@ -2406,20 +2406,18 @@ function toggleAira(){
 function airaGreet(){
   var name=authUser?authUser.name.split(' ')[0]:'there';
   var hour=new Date().getHours();
-  var greet=hour<12?'Good morning':'hour<18?'Good afternoon':'Good evening'';
-  greet=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
-  var msg=greet+', '+name+'! I'm AIRA, your personal flight concierge. ✈
-
-I can search flights, check your credits, explain policies, or help you book — just tell me where you want to go!';
+  var greet=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
+  var msg,line1;
   if(authUser){
-    msg=greet+', '+name+'! I'm AIRA, your personal flight concierge. ✈
-
-I can see your profile and credits. Just tell me where you'd like to fly!';
+    line1=greet+', '+name+"! I'm AIRA, your personal flight concierge.";
+    msg=line1+" \u2708\n\nI can see your profile and credits. Just tell me where you'd like to fly!";
+  }else{
+    line1=greet+', '+name+"! I'm AIRA, your personal flight concierge.";
+    msg=line1+" \u2708\n\nI can search flights, check credits, explain policies, or help you book. Where to?";
   }
   setTimeout(function(){
     airaAddMsg('aira',msg);
-    airaSpeak(msg.split('
-')[0]);
+    airaSpeak(line1);
   },400);
 }
 
@@ -2640,7 +2638,7 @@ async function airaSend(msg){
         if(data.to)document.getElementById('ti').value=data.to;
       },500);
     } else {
-      var reply=data.reply||'I'm not sure about that. Could you rephrase?';
+      var reply=data.reply||"I'm not sure about that. Could you rephrase?";
       airaAddMsg('aira',reply);
       airaSpeak(reply);
       airaHistory.push({role:'assistant',content:reply});
