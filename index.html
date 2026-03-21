@@ -2444,8 +2444,7 @@ function airaAddMsg(role,html,extraClass){
 
   var bubble=document.createElement('div');
   bubble.className='aira-bubble';
-  bubble.innerHTML=html.replace(/
-/g,'<br>');
+  bubble.innerHTML=html.split('\n').join('<br>');
   wrap.appendChild(bubble);
 
   msgs.appendChild(wrap);
@@ -2519,8 +2518,8 @@ function airaSelectFlight(idx){
   var btns=document.createElement('div');
   btns.className='aira-action-btns';
   btns.innerHTML='<button class="aira-action-btn primary" onclick="airaBookFlight()">Book Now</button>'
-    +'<button class="aira-action-btn" onclick="airaAddMsg('user','Show me other options');airaSend('Show me other flight options')">Other options</button>'
-    +'<button class="aira-action-btn" onclick="toggleAira();document.getElementById('flight-ov').classList.add('open');showFlight('+flights.indexOf(f)+')">View Details</button>';
+    +'<button class="aira-action-btn" onclick="airaAddMsg(&quot;user&quot;,&quot;Show me other options&quot;);airaSend(&quot;Show me other flight options&quot;)">Other options</button>'
+    +'<button class="aira-action-btn" onclick="toggleAira();document.getElementById(&quot;flight-ov&quot;).classList.add(&quot;open&quot;);showFlight('+flights.indexOf(f)+')">View Details</button>';
   msg.querySelector('.aira-bubble').appendChild(btns);
   airaSpeak('Great choice! Shall I proceed to booking?');
 }
