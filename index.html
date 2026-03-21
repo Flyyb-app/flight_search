@@ -1898,7 +1898,7 @@ function toggleCredits(){
 let stripe=null,cardElement=null,currentClientSecret=null;
 
 async function initStripe(amount){
-  const key=window.STRIPE_PUBLIC_KEY||'pk_test_your_stripe_publishable_key';
+  const key=window.STRIPE_PUBLIC_KEY||'pk_test_51TB0vc8LORRCNfvJMn4nqdknlGZeryQK3ZO9s6c01atmdY1PRXMXceGXPUmL2uUKmvggLxru2J4iqF1sOniC430700JSJWIPEa';
   if(!stripe)stripe=Stripe(key);
   const elements=stripe.elements();
   cardElement=elements.create('card',{
