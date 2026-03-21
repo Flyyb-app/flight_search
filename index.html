@@ -2063,14 +2063,13 @@ async function doPay(){
       });
     }
     const addonsArr=Object.values(selectedAddons);
-    const base=f.price.perPerson*n;
+    const rt=window._roundTripReturn||null;
+    const rtBase=rt?(rt.price.perPerson*n):0;
+    const base=f.price.perPerson*n + rtBase;
     const addonsTotal=addonsArr.reduce((s,a)=>s+(a.price*a.quantity),0);
     const maxRedeem=Math.round((base+addonsTotal)*0.20*100)/100;
     const creditsToUse=applyCredits?Math.min(userCredits,maxRedeem):0;
 
-    const rt=window._roundTripReturn||null;
-    const rtBase=rt?(rt.price.perPerson*n):0;
-    const base=f.price.perPerson*n + rtBase;
     // Create payment intent
     const intentRes=await fetch(`${FLYYB_API}/api/booking?action=create-intent`,{
       method:'POST',
