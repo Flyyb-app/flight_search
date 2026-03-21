@@ -1046,33 +1046,32 @@ async function doLogin(){
     if(document.getElementById('l-otp-wrap').style.display!=='none'){
       const otp=['lo1','lo2','lo3','lo4','lo5','lo6'].map(id=>document.getElementById(id)?.value||'').join('');
       if(otp.length!==6){err('lerr','Enter the 6-digit OTP');return;}
-      setAuthBtnLoading('l-btn',true,'VERIFY OTP');
+      const btn=document.getElementById('l-btn');
+      btn.disabled=true;btn.textContent='VERIFYING...';
       try{
-        const res=await fetch(`${FLYYB_API}/api/auth?action=verify-otp`,{
+        const res=await fetch(`${FLYYB_API}/api/auth?action=login-otp`,{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({phone:fp,otp})
         });
         const data=await res.json();
-        if(!res.ok){err('lerr',data.error||'Invalid OTP');return;}
+        if(!res.ok){err('lerr',data.error||'Invalid OTP');btn.disabled=false;btn.textContent='VERIFY OTP';return;}
         clearLoginForm();
-        loginOK(data.user, data.accessToken, data.credits||0);
-      }catch(e){err('lerr','Connection error. Please try again.');}
-      finally{setAuthBtnLoading('l-btn',false,'VERIFY OTP');}
+        loginOK(data.user,data.accessToken,data.credits||0);
+      }catch(e){err('lerr','Connection error. Please try again.');btn.disabled=false;btn.textContent='VERIFY OTP';}
     } else {
       // Send OTP
-      setAuthBtnLoading('l-btn',true,'SENDING...');
+      const btn=document.getElementById('l-btn');
+      btn.disabled=true;btn.textContent='SENDING...';
       try{
-        const res=await fetch(`${FLYYB_API}/api/auth?action=login`,{
+        const res=await fetch(`${FLYYB_API}/api/auth?action=send-login-otp`,{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({phone:fp})
         });
         const data=await res.json();
-        if(!res.ok){err('lerr',data.error||'Failed to send OTP');return;}
+        if(!res.ok){err('lerr',data.error||'Failed to send OTP');btn.disabled=false;btn.textContent='SEND OTP';return;}
         document.getElementById('l-otp-wrap').style.display='';
-        document.getElementById('l-btn').textContent='VERIFY OTP';
-        document.getElementById('lok')&&(document.getElementById('lok').textContent='OTP sent!');
-      }catch(e){err('lerr','Connection error. Please try again.');}
-      finally{setAuthBtnLoading('l-btn',false,'SEND OTP');}
+        btn.disabled=false;btn.textContent='VERIFY OTP';
+      }catch(e){err('lerr','Connection error. Please try again.');btn.disabled=false;btn.textContent='SEND OTP';}
     }
     return;
   }
@@ -1084,19 +1083,15 @@ async function doLogin(){
   setAuthBtnLoading('l-btn',true,'SIGN IN');
   try {
     const res=await fetch(`${FLYYB_API}/api/auth?action=login`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email:em,password:pw})
     });
     const data=await res.json();
     if(!res.ok){err('lerr',data.error||'Login failed');return;}
     clearLoginForm();
-    loginOK(data.user, data.accessToken, data.credits);
-  } catch(e){
-    err('lerr','Connection error. Please try again.');
-  } finally {
-    setAuthBtnLoading('l-btn',false,'SIGN IN');
-  }
+    loginOK(data.user,data.accessToken,data.credits);
+  }catch(e){err('lerr','Connection error. Please try again.');}
+  finally{setAuthBtnLoading('l-btn',false,'SIGN IN');}
 }
 
 // Load currencies into registration dropdown
@@ -1327,7 +1322,7 @@ function socialLogin(p){
 }
 
 function loginOK(user, token, credits=0){
-  authUser={...user, credits, currency: user.currency||'USD'};
+  authUser={...user, credits, currency: user.currency||'USD', currencySymbol: user.currencySymbol||'$'};
   authToken=token;
   localStorage.setItem('flyyb_session', JSON.stringify({user:authUser, token:authToken}));
   closeAuth();
@@ -1359,7 +1354,7 @@ function renderNavUser(){
     fetchCredits().then(()=>{
       area.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
-          ${userCredits>0?`<div class="credits-badge" onclick="openTrips()">✦ $${userCredits.toFixed(2)}</div>`:''}
+          ${userCredits>0?`<div class="credits-badge" onclick="openTrips()">✦ ${authUser?.currencySymbol||"$"}${userCredits.toFixed(2)}</div>`:''}
           <div class="user-pill" onclick="toggleUserDropdown(event)">
             <div class="user-avatar">${authUser.name[0].toUpperCase()}</div>
             <div class="user-name">${authUser.name}</div>
@@ -1613,9 +1608,28 @@ function bookRoundTrip() {
     alert('Please select both an outbound and return flight.');
     return;
   }
-  // Open flight modal with outbound flight, mark as round trip booking
   window._roundTripReturn = curReturnFlight;
-  showFlight(flights.indexOf(curFlight));
+  // Show combined flight info modal
+  const f = curFlight;
+  const r = curReturnFlight;
+  document.getElementById('fm-al').textContent = f.airline?.name + ' + ' + r.airline?.name;
+  document.getElementById('fm-rt').textContent = f.origin?.code + ' → ' + f.destination?.code + ' + ' + r.origin?.code + ' → ' + r.destination?.code;
+  const sym = f.price?.symbol||'$';
+  const total = (f.price?.perPerson||0) + (r.price?.perPerson||0);
+  document.getElementById('fm-pr').textContent = sym + total.toLocaleString() + ' ' + (f.price?.currency||'USD');
+  document.getElementById('fm-dets').innerHTML = `
+    <div class="fm-item"><label>Outbound</label><span>${f.origin?.code} → ${f.destination?.code} · ${f.departure} - ${f.arrival}</span></div>
+    <div class="fm-item"><label>Out Flight</label><span>${f.airline?.name} ${f.flightNumber}</span></div>
+    <div class="fm-item"><label>Return</label><span>${r.origin?.code} → ${r.destination?.code} · ${r.departure} - ${r.arrival}</span></div>
+    <div class="fm-item"><label>Ret Flight</label><span>${r.airline?.name} ${r.flightNumber}</span></div>
+    <div class="fm-item"><label>Outbound Price</label><span>${sym}${(f.price?.perPerson||0).toLocaleString()}</span></div>
+    <div class="fm-item"><label>Return Price</label><span>${sym}${(r.price?.perPerson||0).toLocaleString()}</span></div>`;
+  document.getElementById('fm-action').innerHTML = authUser
+    ? `<button class="fm-book" onclick="startPay()">BOOK BOTH FLIGHTS</button>`
+    : `<div class="login-notice"><p>Sign in to book and manage your trips</p><button onclick="closeFlight();openAuth()">Sign In to Book</button></div>`;
+  document.getElementById('finfo').style.display='block';
+  document.getElementById('pay-view').style.display='none';
+  document.getElementById('flight-ov').classList.add('open');
 }
 
 function renderFlights(fs, from, to, dep) {
@@ -1732,7 +1746,7 @@ async function openCreditsModal() {
     const data = await res.json();
     const txns = data.transactions || [];
     el.innerHTML = `
-      <div class="credits-balance-big">$${data.balance.toFixed(2)}</div>
+      <div class="credits-balance-big">${authUser?.currencySymbol||"$"}${data.balance.toFixed(2)}</div>
       <div class="credits-balance-lbl">Available Credits</div>
       <div style="font-size:.7rem;color:rgba(245,240,232,.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Transaction History</div>
       ${txns.length ? txns.map(t => `
@@ -1741,7 +1755,7 @@ async function openCreditsModal() {
             <div>${t.description}</div>
             <div class="credit-tx-date">${new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
           </div>
-          <div class="credit-tx-amt ${t.type}">${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toFixed(2)}</div>
+          <div class="credit-tx-amt ${t.type}">${t.amount > 0 ? '+' : ''+(authUser?.currencySymbol||'$')}${Math.abs(t.amount).toFixed(2)}</div>
         </div>`).join('') : '<div style="color:rgba(245,240,232,.3);text-align:center;padding:30px 0;font-size:.8rem">No transactions yet</div>'}`;
   } catch(e) {
     el.innerHTML = '<div class="trips-empty">Unable to load credits</div>';
@@ -1962,8 +1976,13 @@ async function fetchCredits(){
 }
 
 function buildSummary(){
-  const f=curFlight,n=parseInt(document.getElementById('pax').value)||1;
-  const base=f.price.perPerson*n;
+  const f=curFlight,rt=window._roundTripReturn||null;
+  const n=parseInt(document.getElementById('pax').value)||1;
+  const sym=f.price?.symbol||'$';
+  const curr=f.price?.currency||'USD';
+  const outBase=f.price.perPerson*n;
+  const retBase=rt?(rt.price.perPerson*n):0;
+  const base=outBase+retBase;
   const addonsTotal=Object.values(selectedAddons).reduce((s,a)=>s+(a.price*a.quantity),0);
   const subtotal=base+addonsTotal;
   const maxRedeem=Math.round(subtotal*0.20*100)/100;
@@ -1972,32 +1991,25 @@ function buildSummary(){
 
   let h=`
     <div class="sum-row"><div class="sum-lbl">${f.origin?.code} → ${f.destination?.code} · ${f.airline?.name} ${f.flightNumber}</div></div>
-    <div class="sum-row"><div class="sum-lbl">$${f.price.perPerson.toLocaleString()} × ${n} passenger${n>1?'s':''}</div><div class="sum-val">$${base.toLocaleString()}</div></div>`;
-  if(addonsTotal>0)h+=`<div class="sum-row"><div class="sum-lbl">Add-ons</div><div class="sum-val">$${addonsTotal.toFixed(2)}</div></div>`;
-  if(creditsApplied>0)h+=`<div class="sum-row"><div class="sum-lbl" style="color:#5daa72">Credits applied</div><div class="sum-val" style="color:#5daa72">-$${creditsApplied.toFixed(2)}</div></div>`;
-  h+=`<div class="sum-row sum-total"><div class="sum-lbl">Total Due</div><div class="sum-val">$${total.toFixed(2)}</div></div>`;
+    <div class="sum-row"><div class="sum-lbl">${sym}${f.price.perPerson.toLocaleString()} × ${n} pax</div><div class="sum-val">${sym}${outBase.toLocaleString()}</div></div>`;
+  if(rt){h+=`
+    <div class="sum-row"><div class="sum-lbl">${rt.origin?.code} → ${rt.destination?.code} · ${rt.airline?.name} ${rt.flightNumber}</div></div>
+    <div class="sum-row"><div class="sum-lbl">${sym}${rt.price.perPerson.toLocaleString()} × ${n} pax</div><div class="sum-val">${sym}${retBase.toLocaleString()}</div></div>`;}
+  if(addonsTotal>0)h+=`<div class="sum-row"><div class="sum-lbl">Add-ons</div><div class="sum-val">${sym}${addonsTotal.toFixed(2)}</div></div>`;
+  if(creditsApplied>0)h+=`<div class="sum-row"><div class="sum-lbl" style="color:#5daa72">Credits applied</div><div class="sum-val" style="color:#5daa72">-${sym}${creditsApplied.toFixed(2)}</div></div>`;
+  h+=`<div class="sum-row sum-total"><div class="sum-lbl">Total Due</div><div class="sum-val">${sym}${total.toFixed(2)} ${curr}</div></div>`;
   document.getElementById('bsum').innerHTML=h;
-
-  // Credits apply section
-  if(authUser && userCredits>0){
-    const earnNote=`You'll earn $${(total*0.05).toFixed(2)} credits from this booking`;
+  if(authUser&&userCredits>0){
+    const earnNote=`You will earn ${sym}${(total*0.05).toFixed(2)} credits from this booking`;
     document.getElementById('credits-apply-section').innerHTML=`
-      <div class="credits-apply">
-        <div class="credits-apply-info">
-          <div class="credits-apply-label">✦ FLYYB Credits</div>
-          <div class="credits-apply-val">Balance: $${userCredits.toFixed(2)} · Max apply: $${maxRedeem.toFixed(2)}</div>
-        </div>
-        <button class="credits-toggle ${applyCredits?'active':''}" onclick="toggleCredits()">
-          ${applyCredits?'Applied ✓':'Apply'}
-        </button>
-      </div>
+      <div class="credits-apply"><div class="credits-apply-info">
+        <div class="credits-apply-label">❖ FLYYB Credits</div>
+        <div class="credits-apply-val">Balance: ${sym}${userCredits.toFixed(2)} · Max: ${sym}${maxRedeem.toFixed(2)}</div>
+      </div><button class="credits-toggle ${applyCredits?'active':''}" onclick="toggleCredits()">${applyCredits?'Applied ✓':'Apply'}</button></div>
       <div style="font-size:.68rem;color:rgba(93,170,114,.7);margin-bottom:14px">${earnNote}</div>`;
   }
-
-  // Init Stripe
   initStripe(total);
 }
-
 function toggleCredits(){
   applyCredits=!applyCredits;
   buildSummary();
@@ -2056,12 +2068,15 @@ async function doPay(){
     const maxRedeem=Math.round((base+addonsTotal)*0.20*100)/100;
     const creditsToUse=applyCredits?Math.min(userCredits,maxRedeem):0;
 
+    const rt=window._roundTripReturn||null;
+    const rtBase=rt?(rt.price.perPerson*n):0;
+    const base=f.price.perPerson*n + rtBase;
     // Create payment intent
     const intentRes=await fetch(`${FLYYB_API}/api/booking?action=create-intent`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},
       body:JSON.stringify({
-        flightNumber: f.flightNumber.slice(0,10), // truncate to fit varchar(10)
+        flightNumber: f.flightNumber.slice(0,20),
         airlineCode:  f.airline?.code,
         originCode:   f.origin?.code,
         destCode:     f.destination?.code,
@@ -2074,6 +2089,7 @@ async function doPay(){
         addons:       addonsArr,
         baseAmount:   base+addonsTotal,
         creditsToUse,
+        returnFlight: rt?{flightNumber:rt.flightNumber,airlineCode:rt.airline?.code,originCode:rt.origin?.code,destCode:rt.destination?.code,depDate:parseDateToISO(document.getElementById('ret-d').value),depTime:rt.departure,arrTime:rt.arrival,baseAmount:rtBase}:null,
       })
     });
     const intentData=await intentRes.json();
@@ -2088,9 +2104,10 @@ async function doPay(){
 
     // Success
     document.getElementById('bref').textContent=intentData.bookingRef;
+    const earnSym=(curFlight?.price?.symbol||'$');
     if(intentData.summary?.creditsToEarn>0){
       document.getElementById('credits-earned-msg').textContent=
-        `🎉 You earned $${intentData.summary.creditsToEarn.toFixed(2)} FLYYB credits!`;
+        `🎉 You earned ${earnSym}${intentData.summary.creditsToEarn.toFixed(2)} FLYYB credits!`;
     }
     // Save checked passengers to profile
     await savePassengersFromBooking(passengers);
