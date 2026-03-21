@@ -571,7 +571,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
               <input class="otp-i" id="lo6" maxlength="1" oninput="otn(this,'lo5',null)">
             </div>
           </div>
-          <p class="otp-note">Demo OTP: <b>123456</b></p>
+          
         </div>
       </div>
       <button class="auth-btn" id="l-btn" onclick="doLogin()">SIGN IN</button>
@@ -1322,7 +1322,9 @@ function socialLogin(p){
 }
 
 function loginOK(user, token, credits=0){
-  authUser={...user, credits, currency: user.currency||'USD', currencySymbol: user.currencySymbol||'$'};
+  var CURR_SYMBOLS={'USD':'$','EUR':'€','GBP':'£','INR':'₹','JPY':'¥','AUD':'A$','CAD':'C$','SGD':'S$','AED':'AED','CHF':'CHF','CNY':'¥','HKD':'HK$','KRW':'₩','MYR':'RM','THB':'฿','IDR':'Rp','PHP':'₱','VND':'₫','TWD':'NT$','NZD':'NZ$','BRL':'R$','MXN':'MX$','ZAR':'R','TRY':'₺','SEK':'kr','NOK':'kr','DKK':'kr','PKR':'₨','BDT':'৳','LKR':'₨','NPR':'₨','QAR':'QAR','SAR':'SAR'};
+  var sym=CURR_SYMBOLS[user.currency]||'$';
+  authUser={...user, credits, currency: user.currency||'USD', currencySymbol: sym};
   authToken=token;
   localStorage.setItem('flyyb_session', JSON.stringify({user:authUser, token:authToken}));
   closeAuth();
@@ -1925,8 +1927,10 @@ function toggleSeat(id,max){selSeats.includes(id)?selSeats=selSeats.filter(s=>s!
 // -- ADD-ONS ---------------------------------------------------
 let selectedAddons={};
 
-async function buildAddons(){
+async function buildAddons(isRoundTrip){
   const airline=curFlight?.airline?.code||'';
+  const rt=window._roundTripReturn;
+  const sectionLabel=isRoundTrip?'<div class="pax-title" style="color:#4a7fa8;margin-top:0">Outbound &amp; Return Add-ons</div>':'';
   try{
     const res=await fetch(`${FLYYB_API}/api/booking?action=addons&airline=${airline}`);
     const data=await res.json();
@@ -1944,7 +1948,7 @@ async function buildAddons(){
             <div class="addon-name">${a.name}</div>
             <div class="addon-desc">${a.description}</div>
           </div>
-          <div class="addon-price">${a.price===0?'Complimentary':'$'+a.price}</div>
+          <div class="addon-price">${a.price===0?'Complimentary':(authUser?.currencySymbol||'$')+a.price}</div>
           <div class="addon-check">${sel?'✓':''}</div>
         </div>`;
       });
@@ -2088,6 +2092,7 @@ async function doPay(){
         addons:       addonsArr,
         baseAmount:   base+addonsTotal,
         creditsToUse,
+        confirmationEmail: document.getElementById('conf-email')?.value.trim()||authUser?.email||null,
         returnFlight: rt?{flightNumber:rt.flightNumber,airlineCode:rt.airline?.code,originCode:rt.origin?.code,destCode:rt.destination?.code,depDate:parseDateToISO(document.getElementById('ret-d').value),depTime:rt.departure,arrTime:rt.arrival,baseAmount:rtBase}:null,
       })
     });
@@ -2123,6 +2128,7 @@ async function doPay(){
 
 function setStep(n){
   payStep=n;
+  const isRT=!!window._roundTripReturn;
   [1,2,3,4,5].forEach(i=>{
     const ps=document.getElementById('ps'+i),sec=document.getElementById('s'+i);
     if(!ps)return;
@@ -2132,7 +2138,7 @@ function setStep(n){
     if(sec)sec.classList.toggle('active',i===n);
   });
   if(n===2)buildSeats();
-  if(n===3)buildAddons();
+  if(n===3)buildAddons(isRT);
   if(n===4){fetchCredits().then(()=>buildSummary());}
 }
 
@@ -2608,9 +2614,11 @@ async function submitVerifyOTP(email) {
 
 function downloadBookingPDF() {
   var f = curFlight;
+  var rt = window._roundTripReturn || null;
   var ref = document.getElementById('bref')?.textContent || '';
   var creditsMsg = document.getElementById('credits-earned-msg')?.textContent || '';
   var paxCount = parseInt(document.getElementById('pax')?.value) || 1;
+  var sym = f ? (f.price?.symbol||'$') : '$';
 
   // Build passenger list from form data
   var paxRows = '';
@@ -2626,7 +2634,9 @@ function downloadBookingPDF() {
   }
 
   var depDate = document.getElementById('dep-d')?.value || '';
-  var price = f ? (f.price?.symbol||'$')+(f.price?.perPerson||0).toLocaleString()+' '+( f.price?.currency||'USD') : '';
+  var retDate = document.getElementById('ret-d')?.value || '';
+  var price = f ? sym+(f.price?.perPerson||0).toLocaleString()+' '+(f.price?.currency||'USD') : '';
+  var retPrice = rt ? sym+(rt.price?.perPerson||0).toLocaleString()+' '+(rt.price?.currency||'USD') : '';
 
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
     + '<title>FLYYB Booking '+ref+'</title>'
@@ -2664,8 +2674,12 @@ function downloadBookingPDF() {
       + '<div class="route-city"><div class="route-code">'+(f.origin?.code||'')+'</div><div class="route-name">'+(f.origin?.city||'')+'</div></div>'
       + '<div class="route-arrow">✈</div>'
       + '<div class="route-city"><div class="route-code">'+(f.destination?.code||'')+'</div><div class="route-name">'+(f.destination?.city||'')+'</div></div>'
+      + (rt ? '<div style="margin:0 16px;color:#ccc;font-size:20px">+</div>'
+        + '<div class="route-city"><div class="route-code">'+rt.origin?.code+'</div><div class="route-name">'+rt.origin?.city+'</div></div>'
+        + '<div class="route-arrow">✈</div>'
+        + '<div class="route-city"><div class="route-code">'+rt.destination?.code+'</div><div class="route-name">'+rt.destination?.city+'</div></div>' : '')
       + '</div>' : '')
-    + '<div class="section"><div class="section-title">Flight Details</div>'
+    + '<div class="section"><div class="section-title">Outbound Flight</div>'
     + '<div class="info-grid">'
     + '<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+depDate+'</div></div>'
     + '<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+(f?f.airline?.name:'')+'</div></div>'
@@ -2676,6 +2690,17 @@ function downloadBookingPDF() {
     + '<div class="info-item"><div class="info-label">Stops</div><div class="info-val">'+(f?(f.stops===0?'Nonstop':f.stops+' Stop'):'')+'</div></div>'
     + '<div class="info-item"><div class="info-label">Price per Person</div><div class="info-val">'+price+'</div></div>'
     + '</div></div>'
+    + (rt ? '<div class="section"><div class="section-title">Return Flight</div>'
+      + '<div class="info-grid">'
+      + '<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+retDate+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+rt.airline?.name+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Departure</div><div class="info-val">'+rt.departure+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Arrival</div><div class="info-val">'+rt.arrival+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Duration</div><div class="info-val">'+rt.duration+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Cabin</div><div class="info-val">'+rt.cabin.charAt(0).toUpperCase()+rt.cabin.slice(1)+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Stops</div><div class="info-val">'+(rt.stops===0?'Nonstop':rt.stops+' Stop')+'</div></div>'
+      + '<div class="info-item"><div class="info-label">Price per Person</div><div class="info-val">'+retPrice+'</div></div>'
+      + '</div></div>' : '')
     + (paxRows ? '<div class="section"><div class="section-title">Passengers</div>'
       + '<table><thead><tr><th>#</th><th>Name</th><th>Date of Birth</th></tr></thead>'
       + '<tbody>'+paxRows+'</tbody></table></div>' : '')
