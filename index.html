@@ -1236,9 +1236,8 @@ async function doResendOTP(){
 }
 
 function proceedAfterReg(data){
-  // Reset reg form for next time
   resetRegForm();
-  loginOK(data.user, data.token, 0);
+  loginOK(data.user, data.accessToken||data.token, data.credits||0);
 }
 
 function dismissRegSuccess(){
@@ -1459,6 +1458,11 @@ async function doSearch() {
 
 function renderRoundTrip(outFlights, retFlights, from, to, dep, ret) {
   const c = document.getElementById('rc');
+  // Reset and rebuild flights array with all flights so indexOf works correctly
+  flights = [];
+  outFlights.forEach(f => flights.push(f));
+  retFlights.forEach(f => flights.push(f));
+
   let h = `
     <div class="results-header" style="margin-bottom:8px">
       <div class="results-title">${from.city} → ${to.city}</div>
@@ -1477,6 +1481,7 @@ function renderRoundTrip(outFlights, retFlights, from, to, dep, ret) {
     h += '<div class="empty-hero" style="padding:20px 0"><p style="color:rgba(245,240,232,.4);font-size:.85rem">No return flights found for selected date.</p></div>';
   }
   c.innerHTML = h;
+  setTimeout(() => document.querySelectorAll('.flight-card').forEach((el, i) => setTimeout(() => el.classList.add('revealed'), i * 60)), 50);
 }
 
 function buildFlightCard(f, from, to, dep) {
