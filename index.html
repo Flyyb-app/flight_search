@@ -26,6 +26,19 @@ nav{display:flex;gap:32px;align-items:center}
 nav a{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.5);text-decoration:none;font-weight:500;transition:color .2s;cursor:pointer}
 nav a:hover{color:var(--paper)}
 .nav-cta{background:var(--gold)!important;color:var(--ink)!important;padding:8px 20px!important;border-radius:2px}
+.nav-dropdown{position:relative;display:inline-block}
+.nav-dropdown-card{display:none;position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);background:#0f1922;border:1px solid rgba(212,168,67,.25);border-radius:8px;min-width:300px;padding:20px;z-index:300;box-shadow:0 12px 40px rgba(0,0,0,.6);animation:navCardIn .2s ease}
+@keyframes navCardIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.nav-dropdown:hover .nav-dropdown-card,.nav-dropdown-card:hover{display:block}
+.nav-dd-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--gold);margin-bottom:6px}
+.nav-dd-desc{font-size:.75rem;color:rgba(245,240,232,.5);line-height:1.6;margin-bottom:14px}
+.nav-dd-item{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-radius:4px;cursor:pointer;transition:background .15s;margin-bottom:6px}
+.nav-dd-item:hover{background:rgba(255,255,255,.05)}
+.nav-dd-icon{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+.nav-dd-item-text strong{display:block;font-size:.8rem;color:var(--paper);margin-bottom:2px}
+.nav-dd-item-text span{font-size:.72rem;color:rgba(245,240,232,.4);line-height:1.5}
+.nav-dd-cta{width:100%;background:var(--gold);border:none;border-radius:2px;color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:.15em;padding:10px;cursor:pointer;margin-top:8px;transition:background .2s}
+.nav-dd-cta:hover{background:#e5ba5a}
 .nav-cta:hover{background:#e5ba5a!important}
 .user-pill{display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:24px;padding:6px 14px 6px 8px;cursor:pointer;transition:border-color .2s;position:relative}
 .user-pill:hover{border-color:rgba(212,168,67,.3)}
@@ -293,6 +306,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
   #flyyb-print-area { position: fixed; inset: 0; background: white; z-index: 99999; padding: 40px; }
 }
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center}
+/* -- TERMS MODAL */
+.terms-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1200;display:none;align-items:center;justify-content:center}
+.terms-modal-ov.open{display:flex}
+.terms-modal{background:#0f1922;border:1px solid rgba(212,168,67,.25);border-radius:8px;max-width:560px;width:92%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.terms-modal-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.terms-modal-body{padding:20px 22px;overflow-y:auto;flex:1;font-size:.78rem;color:rgba(245,240,232,.6);line-height:1.7}
+.terms-modal-body h3{color:var(--gold);font-family:"Bebas Neue",sans-serif;letter-spacing:.1em;font-size:1rem;margin:16px 0 6px}
+.terms-modal-body h3:first-child{margin-top:0}
+.terms-modal-footer{padding:14px 22px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:10px;flex-shrink:0}
 .confirm-overlay.open{display:flex}
 .confirm-box{background:#0f1922;border:1px solid rgba(212,168,67,.3);border-radius:8px;padding:28px 32px;max-width:380px;width:90%;text-align:center}
 .confirm-box-icon{font-size:2rem;margin-bottom:12px}
@@ -474,9 +496,65 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
   <header>
     <a href="#" class="logo"><span class="logo-name">FLY<span style="color:var(--gold)">YB</span></span><div class="logo-tagline">fly with vibe</div></a>
     <nav>
-      <a href="#">Explore</a>
+      <div class="nav-dropdown">
+        <a href="#" onclick="return false">Explore</a>
+        <div class="nav-dropdown-card">
+          <div class="nav-dd-title">✈ Explore FLYYB</div>
+          <div class="nav-dd-desc">Discover smarter ways to travel with AI-powered tools</div>
+          <div class="nav-dd-item" onclick="toggleAira()">
+            <div class="nav-dd-icon">🤖</div>
+            <div class="nav-dd-item-text">
+              <strong>AIRA — AI Concierge</strong>
+              <span>Chat with AIRA to search flights, book instantly, manage trips and get travel help — all by conversation.</span>
+            </div>
+          </div>
+          <div class="nav-dd-item" onclick="document.getElementById('rs').scrollIntoView({behavior:'smooth'})">
+            <div class="nav-dd-icon">🔍</div>
+            <div class="nav-dd-item-text">
+              <strong>Smart Flight Search</strong>
+              <span>Search hundreds of routes with real-time pricing, seat availability and cabin class options.</span>
+            </div>
+          </div>
+          <div class="nav-dd-item" onclick="authUser?openTrips():openAuth('reg')">
+            <div class="nav-dd-icon">🗺️</div>
+            <div class="nav-dd-item-text">
+              <strong>My Trips</strong>
+              <span>View, reschedule or cancel your bookings. Full trip history at a glance.</span>
+            </div>
+          </div>
+          <button class="nav-dd-cta" onclick="toggleAira()">TALK TO AIRA →</button>
+        </div>
+      </div>
       <a href="#" onclick="openTrips()">My Trips</a>
-      <a href="#">Deals</a>
+      <div class="nav-dropdown">
+        <a href="#" onclick="return false">Deals</a>
+        <div class="nav-dropdown-card">
+          <div class="nav-dd-title">✦ FLYYB Credits</div>
+          <div class="nav-dd-desc">Our rewards programme — earn on every booking, save on every future flight</div>
+          <div class="nav-dd-item">
+            <div class="nav-dd-icon">💳</div>
+            <div class="nav-dd-item-text">
+              <strong>Earn 5% on Every Booking</strong>
+              <span>Every time you fly with FLYYB, 5% of your booking value is credited to your account automatically.</span>
+            </div>
+          </div>
+          <div class="nav-dd-item">
+            <div class="nav-dd-icon">🎯</div>
+            <div class="nav-dd-item-text">
+              <strong>Use Up to 20% Per Booking</strong>
+              <span>Apply your credits to any future booking — up to 20% of the total fare can be paid with credits.</span>
+            </div>
+          </div>
+          <div class="nav-dd-item">
+            <div class="nav-dd-icon">♾️</div>
+            <div class="nav-dd-item-text">
+              <strong>Credits Never Expire</strong>
+              <span>Your FLYYB credits stay in your account until you use them. No expiry dates, no hidden catches.</span>
+            </div>
+          </div>
+          <button class="nav-dd-cta" onclick="authUser?openCreditsModal():openAuth('reg')">${authUser?'VIEW MY CREDITS':'JOIN & START EARNING →'}</button>
+        </div>
+      </div>
       <div id="nav-auth-area"><a class="nav-cta" onclick="openAuth()">Sign In</a></div>
     </nav>
   </header>
@@ -676,6 +754,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
           <span style="font-size:.72rem;color:rgba(245,240,232,.4)">Didn't receive? </span>
           <button onclick="doResendOTP()" style="background:none;border:none;color:var(--gold);font-size:.72rem;cursor:pointer;text-decoration:underline">Resend OTP</button>
         </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;margin-top:4px">
+        <input type="checkbox" id="r-terms" style="accent-color:var(--gold);margin-top:3px;flex-shrink:0">
+        <label for="r-terms" style="font-size:.73rem;color:rgba(245,240,232,.5);line-height:1.5;cursor:pointer">
+          I agree to the <button onclick="showTerms()" style="background:none;border:none;color:var(--gold);font-size:.73rem;cursor:pointer;text-decoration:underline;padding:0">Terms &amp; Conditions</button> including booking, cancellation, credits and AIRA usage policies
+        </label>
       </div>
       <button class="auth-btn" id="r-btn" onclick="doReg()">CREATE ACCOUNT</button>
     </div>
@@ -1192,6 +1276,7 @@ async function doReg(){
     if(!namep){err('rerr','Enter your full name');return;}
     if(!phone){err('rerr','Enter your mobile number');return;}
     if(!currency){err('rerr','Please select a default currency');return;}
+    const termsPhEl=document.getElementById('r-terms-phone');if(termsPhEl&&!termsPhEl.checked){err('rerr','Please accept the Terms & Conditions to continue');return;}
     setAuthBtnLoading('r-btn',true,'SEND OTP');
     try{
       const res=await securePost(`${FLYYB_API}/api/auth?action=register`,{name:namep,phone,dial,currency,provider:'phone'});
@@ -1242,6 +1327,7 @@ async function doReg(){
   if(!pw||pw.length<8){err('rerr','Password must be 8+ characters');return;}
   if(pw!==pw2){err('rerr','Passwords do not match');return;}
   if(!currency){err('rerr','Please select a default currency');return;}
+  const termsEl=document.getElementById('r-terms');if(termsEl&&!termsEl.checked){err('rerr','Please accept the Terms & Conditions to continue');return;}
   setAuthBtnLoading('r-btn',true,'CREATE ACCOUNT');
   try{
     const res=await securePost(`${FLYYB_API}/api/auth?action=register`,{name,email:em,password:pw,currency});
@@ -1371,6 +1457,12 @@ function resetRegForm(){
       </div>
     </div>
     <div id="r-otp-step" style="display:none"></div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;margin-top:4px">
+      <input type="checkbox" id="r-terms-phone" style="accent-color:var(--gold);margin-top:3px;flex-shrink:0">
+      <label for="r-terms-phone" style="font-size:.73rem;color:rgba(245,240,232,.5);line-height:1.5;cursor:pointer">
+        I agree to the <button onclick="showTerms()" style="background:none;border:none;color:var(--gold);font-size:.73rem;cursor:pointer;text-decoration:underline;padding:0">Terms &amp; Conditions</button>
+      </label>
+    </div>
     <button class="auth-btn" id="r-btn" onclick="doReg()">CREATE ACCOUNT</button>`;
   loadCurrencies();
 }
@@ -1414,7 +1506,7 @@ function renderNavUser(){
     fetchCredits().then(()=>{
       area.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
-          ${userCredits>0?`<div class="credits-badge" onclick="openTrips()">✦ ${authUser?.currencySymbol||"$"}${userCredits.toFixed(2)}</div>`:''}
+          ${userCredits>0?`<div class="credits-badge" onclick="openCreditsModal()">✦ ${authUser?.currencySymbol||"$"}${userCredits.toFixed(2)}</div>`:''}
           <div class="user-pill" onclick="toggleUserDropdown(event)">
             <div class="user-avatar">${authUser.name[0].toUpperCase()}</div>
             <div class="user-name">${authUser.name}</div>
@@ -1926,6 +2018,15 @@ function buildPaxForms(){
           </svg>
         </div>
       </div>
+      <div class="pf"><label>Gender<span class="req">*</span></label>
+        <select id="pf${i}e" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:11px 13px;width:100%;outline:none;-webkit-appearance:none">
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+          <option value="prefer_not">Prefer not to say</option>
+        </select>
+      </div>
       <div class="pf"><label>Passport / ID</label><input type="text" placeholder="A12345678" id="pf${i}d"></div>
       ${i===0?`<div class="pf full"><label>Confirmation Email<span class="req">*</span></label><input type="email" placeholder="you@example.com" id="conf-email" value="${authUser?authUser.email:''}"></div>`:''}
     </div>
@@ -1952,16 +2053,7 @@ function validateAddonsAndProceed(){
   setStep(4);
 }
 
-function selectProfile(id){
-  const p=savedPassengers.find(x=>x.id===id);
-  if(!p)return;
-  document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('selected'));
-  document.getElementById('profile-'+id).classList.add('selected');
-  if(document.getElementById('pf0a'))document.getElementById('pf0a').value=p.firstName;
-  if(document.getElementById('pf0b'))document.getElementById('pf0b').value=p.lastName;
-  if(document.getElementById('pf0c')&&p.dob)document.getElementById('pf0c').value=p.dob;
-  if(document.getElementById('pf0d')&&p.passportNo)document.getElementById('pf0d').value=p.passportNo;
-}
+// selectProfile defined in profile block below
 
 function buildSeats(){
   const n=parseInt(document.getElementById('pax').value)||1;
@@ -1978,7 +2070,17 @@ function buildSeats(){
     });
   }
   document.getElementById('sg').innerHTML=h;
-  document.getElementById('si').textContent=`${selSeats.length} of ${n} seat${n>1?'s':''} selected${selSeats.length?' · '+selSeats.join(', '):''}`;
+  const rtLabel=window._roundTripReturn?' (Outbound)':'';
+  document.getElementById('si').textContent=`${selSeats.length} of ${n} seat${n>1?'s':''} selected${rtLabel}${selSeats.length?' · '+selSeats.join(', '):''}`;
+  // Show return seat note for round trips
+  const retNote=document.getElementById('rt-seat-note');
+  if(window._roundTripReturn&&!retNote){
+    const note=document.createElement('div');
+    note.id='rt-seat-note';
+    note.style.cssText='font-size:.7rem;color:#4a7fa8;margin-top:8px;padding:8px 12px;background:rgba(74,127,168,.08);border:1px solid rgba(74,127,168,.2);border-radius:4px';
+    note.textContent='Return flight seats will be randomly assigned. Contact airline to change.';
+    document.getElementById('sg').parentNode.insertBefore(note,document.getElementById('sg').nextSibling);
+  }
 }
 function toggleSeat(id,max){selSeats.includes(id)?selSeats=selSeats.filter(s=>s!==id):selSeats.length<max&&selSeats.push(id);buildSeats()}
 
@@ -1988,40 +2090,57 @@ let selectedAddons={};
 async function buildAddons(isRoundTrip){
   const airline=curFlight?.airline?.code||'';
   const rt=window._roundTripReturn;
-  const sectionLabel=isRoundTrip?'<div class="pax-title" style="color:#4a7fa8;margin-top:0">Outbound &amp; Return Add-ons</div>':'';
-  try{
-    const res=await fetch(`${FLYYB_API}/api/booking?action=addons&airline=${airline}`);
-    const data=await res.json();
+  function renderAddons(data,prefix,label){
     const cats={baggage:'🧳 Baggage',seat:'💺 Seat Upgrades',meal:'🍽️ Meals',kit:'🎁 Comfort & Extras'};
-    let h='';
-    Object.entries(cats).forEach(([cat,label])=>{
+    let h=label?`<div class="pax-title" style="font-size:.72rem;margin-bottom:10px">${label}</div>`:'';
+    let hasItems=false;
+    Object.entries(cats).forEach(([cat,catLabel])=>{
       const items=data.addons?.[cat]||[];
       if(!items.length)return;
-      h+=`<div class="addon-category"><div class="addon-category-title">${label}</div>`;
+      hasItems=true;
+      h+=`<div class="addon-category"><div class="addon-category-title">${catLabel}</div>`;
       items.forEach(a=>{
-        const sel=selectedAddons[a.code];
-        h+=`<div class="addon-item${sel?' selected':''}" onclick="toggleAddon('${a.code}',${a.price},'${a.name}')">
+        const key=prefix+a.code;
+        const sel=selectedAddons[key];
+        h+=`<div class="addon-item${sel?' selected':''}" onclick="toggleAddon('${key}',${a.price},'${a.name}')">
           <div class="addon-icon">${a.icon}</div>
-          <div class="addon-info">
-            <div class="addon-name">${a.name}</div>
-            <div class="addon-desc">${a.description}</div>
-          </div>
+          <div class="addon-info"><div class="addon-name">${a.name}</div><div class="addon-desc">${a.description}</div></div>
           <div class="addon-price">${a.price===0?'Complimentary':(authUser?.currencySymbol||'$')+a.price}</div>
           <div class="addon-check">${sel?'✓':''}</div>
         </div>`;
       });
       h+='</div>';
     });
+    return hasItems?h:'';
+  }
+  try{
+    const res=await fetch(`${FLYYB_API}/api/booking?action=addons&airline=${airline}`);
+    const data=await res.json();
+    let h='';
+    if(isRoundTrip&&rt){
+      h+=renderAddons(data,'out_','✈ Outbound: '+curFlight?.origin?.code+' → '+curFlight?.destination?.code);
+      // Fetch return airline addons if different airline
+      const retAirline=rt.airline?.code||'';
+      if(retAirline&&retAirline!==airline){
+        const res2=await fetch(`${FLYYB_API}/api/booking?action=addons&airline=${retAirline}`);
+        const data2=await res2.json();
+        h+=renderAddons(data2,'ret_','✈ Return: '+rt.origin?.code+' → '+rt.destination?.code);
+      }else{
+        h+=renderAddons(data,'ret_','✈ Return: '+rt.origin?.code+' → '+rt.destination?.code);
+      }
+    }else{
+      h+=renderAddons(data,'out_','');
+    }
     document.getElementById('addons-list').innerHTML=h||'<div style="color:rgba(245,240,232,.4);font-size:.8rem;padding:20px 0;text-align:center">No add-ons available for this flight</div>';
   }catch(e){
     document.getElementById('addons-list').innerHTML='<div style="color:rgba(245,240,232,.4);font-size:.8rem">Unable to load add-ons</div>';
   }
 }
 
-function toggleAddon(code,price,name){
-  if(selectedAddons[code]) delete selectedAddons[code];
-  else selectedAddons[code]={code,price,name,quantity:1};
-  buildAddons();
+function toggleAddon(key,price,name){
+  if(selectedAddons[key]) delete selectedAddons[key];
+  else selectedAddons[key]={code:key.replace(/^(out_|ret_)/,''),key,price,name,quantity:1};
+  buildAddons(!!window._roundTripReturn);
 }
 
 // -- CREDITS ---------------------------------------------------
@@ -2121,6 +2240,7 @@ async function doPay(){
         lastName: document.getElementById('pf'+i+'b')?.value||'',
         dob:      document.getElementById('pf'+i+'c')?.value||null,
         passportNo:document.getElementById('pf'+i+'d')?.value||null,
+        gender:   document.getElementById('pf'+i+'e')?.value||null,
         seat:     selSeats[i]||null,
       });
     }
@@ -2211,6 +2331,8 @@ function gotoStep(n){
         if(!fn){alert('Please enter first name for passenger '+(i+1));return;}
         if(!ln){alert('Please enter last name for passenger '+(i+1));return;}
         if(!dob){alert('Date of birth is required for passenger '+(i+1));return;}
+        const gender=document.getElementById('pf'+i+'e')?.value;
+        if(!gender){alert('Please select gender for passenger '+(i+1));return;}
       }
       const email=document.getElementById('conf-email')?.value.trim();
       if(!email||!email.includes('@')){alert('Please enter a valid confirmation email');return;}
@@ -2337,6 +2459,171 @@ async function submitReschedule(ref){
     alert('Booking rescheduled successfully! A confirmation has been sent to your email.');
     loadTrips('all',document.querySelector('.trip-filter.active'));
   }catch(e){document.getElementById('reschedule-err').textContent='Unable to reschedule. Please try again.';}
+}
+
+
+// ── SAVED PASSENGERS & PROFILE ───────────────────────────────
+let savedPassengers = [];
+
+async function loadSavedPassengers(){
+  if(!authToken)return;
+  try{
+    const res=await fetch(`${FLYYB_API}/api/profiles?action=passengers`,{headers:{Authorization:`Bearer ${authToken}`}});
+    savedPassengers=await res.json();
+  }catch(e){}
+}
+
+async function savePassengersFromBooking(passengers){
+  if(!authToken||!passengers.length)return;
+  try{
+    await fetch(`${FLYYB_API}/api/profiles?action=passengers`,{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},
+      body:JSON.stringify({passengers})
+    });
+  }catch(e){}
+}
+
+function selectProfile(id){
+  const p=savedPassengers.find(x=>x.id===id);
+  if(!p)return;
+  document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('selected'));
+  const card=document.getElementById('profile-'+id);
+  if(card)card.classList.add('selected');
+  if(document.getElementById('pf0a'))document.getElementById('pf0a').value=p.firstName;
+  if(document.getElementById('pf0b'))document.getElementById('pf0b').value=p.lastName;
+  if(document.getElementById('pf0c')&&p.dob)document.getElementById('pf0c').value=p.dob;
+  if(document.getElementById('pf0d')&&p.passportNo)document.getElementById('pf0d').value=p.passportNo;
+}
+
+async function openProfile(){
+  closeUserDropdown();
+  if(!authUser){openAuth();return;}
+  document.getElementById('profile-ov').classList.add('open');
+  await loadProfileContent();
+}
+function closeProfile(){document.getElementById('profile-ov').classList.remove('open');}
+
+async function loadProfileContent(){
+  const el=document.getElementById('profile-content');
+  el.innerHTML='<div class="trips-empty">Loading...</div>';
+  try{
+    const res=await fetch(`${FLYYB_API}/api/profiles?action=get`,{headers:{Authorization:`Bearer ${authToken}`}});
+    const d=await res.json();
+    let passHtml=d.passengers&&d.passengers.length
+      ?d.passengers.map(p=>`<div class="profile-card" style="cursor:default">
+          <div class="profile-avatar">${p.firstName[0]}${p.lastName[0]}</div>
+          <div class="profile-info">
+            <div class="profile-name">${p.firstName} ${p.lastName}</div>
+            <div class="profile-detail">${p.passportNo||'No passport'}${p.dob?' - '+p.dob:''}</div>
+          </div>
+          ${p.isPrimary?'<span class="profile-primary">Primary</span>':''}
+          <button onclick="deletePassenger(${p.id})" style="background:none;border:none;color:rgba(181,69,27,.6);cursor:pointer;font-size:.8rem;margin-left:8px">remove</button>
+        </div>`).join('')
+      :'<div style="color:rgba(245,240,232,.3);font-size:.78rem;padding:10px 0">No saved passengers yet</div>';
+    el.innerHTML=`
+      <div style="display:grid;gap:20px">
+        <div style="background:var(--gold-dim);border:1px solid rgba(212,168,67,.2);border-radius:4px;padding:16px 20px;display:flex;align-items:center;gap:16px">
+          <div style="font-size:1.4rem">&#x2756;</div>
+          <div>
+            <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.4)">FLYYB Member ID</div>
+            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--gold);letter-spacing:.2em">${d.flyybId||'--'}</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:12px">Account Information</div>
+          <div class="pax-form">
+            <div class="pf"><label>Full Name</label><input type="text" id="prof-name" value="${d.name||''}" placeholder="Your name"></div>
+            <div class="pf"><label>Email <span style="font-size:.6rem;color:${d.emailVerified?'#5daa72':'var(--rust)'}">${d.emailVerified?'Verified':'Unverified'}</span></label>
+            <input type="text" id="prof-email" value="${d.email||''}" readonly style="opacity:.7"></div>
+            <div class="pf"><label>Phone</label><input type="text" id="prof-phone" value="${d.phone||'--'}" readonly style="opacity:.7"></div>
+            <div class="pf"><label>Currency</label>
+              <select id="prof-currency" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:12px 14px;width:100%;outline:none">
+                <option value="">Loading...</option>
+              </select>
+            </div>
+          </div>
+          <button class="p-next" style="margin-top:12px" onclick="saveProfile()">SAVE CHANGES</button>
+        </div>
+        <div>
+          <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:12px">Change Password</div>
+          <div class="pax-form">
+            <div class="pf full"><label>Current Password</label><input type="password" id="pw-current" placeholder="Current password"></div>
+            <div class="pf"><label>New Password</label><input type="password" id="pw-new" placeholder="Min. 8 chars"></div>
+            <div class="pf"><label>Confirm New</label><input type="password" id="pw-confirm" placeholder="Repeat new password"></div>
+          </div>
+          <div class="msg-err" id="pw-err" style="margin-top:8px"></div>
+          <button class="p-next" style="margin-top:12px;background:rgba(255,255,255,.08)" onclick="changePassword()">UPDATE PASSWORD</button>
+        </div>
+        <div>
+          <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:12px">Saved Passengers</div>
+          <div id="prof-passengers">${passHtml}</div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+          <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust);margin-bottom:12px">Danger Zone</div>
+          <button onclick="deleteAccount()" style="background:none;border:1px solid rgba(181,69,27,.3);border-radius:2px;color:var(--rust);font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.1em;padding:9px 20px;cursor:pointer">Delete Account</button>
+        </div>
+      </div>`;
+    const crRes=await fetch(`${FLYYB_API}/api/profiles?action=currencies`);
+    const currencies=await crRes.json();
+    const sel=document.getElementById('prof-currency');
+    if(sel)sel.innerHTML=currencies.map(c=>`<option value="${c.code}" ${c.code===d.currency?'selected':''}>${c.code} - ${c.name} (${c.symbol})</option>`).join('');
+  }catch(e){el.innerHTML='<div class="trips-empty">Unable to load profile</div>';}
+}
+
+async function saveProfile(){
+  const name=document.getElementById('prof-name')?.value.trim();
+  const currency=document.getElementById('prof-currency')?.value;
+  try{
+    if(name){
+      await fetch(`${FLYYB_API}/api/profiles?action=update`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},body:JSON.stringify({name})});
+      authUser.name=name;
+    }
+    if(currency&&currency!==authUser?.currency){
+      const r=await fetch(`${FLYYB_API}/api/profiles?action=change-currency`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},body:JSON.stringify({currency})});
+      const d=await r.json();
+      authUser.currency=currency;
+      if(d.warning)alert(d.warning);
+    }
+    localStorage.setItem('flyyb_session',JSON.stringify({user:authUser,token:authToken}));
+    renderNavUser();
+    alert('Profile saved!');
+  }catch(e){alert('Failed to save. Please try again.');}
+}
+
+async function changePassword(){
+  const cur=document.getElementById('pw-current')?.value;
+  const nw=document.getElementById('pw-new')?.value;
+  const conf=document.getElementById('pw-confirm')?.value;
+  const errEl=document.getElementById('pw-err');
+  errEl.textContent='';
+  if(!cur||!nw||!conf){errEl.textContent='All fields required';errEl.classList.add('on');return;}
+  if(nw!==conf){errEl.textContent='Passwords do not match';errEl.classList.add('on');return;}
+  try{
+    const r=await fetch(`${FLYYB_API}/api/profiles?action=change-password`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},body:JSON.stringify({currentPassword:cur,newPassword:nw})});
+    const d=await r.json();
+    if(!r.ok){errEl.textContent=d.error||'Failed';errEl.classList.add('on');return;}
+    ['pw-current','pw-new','pw-confirm'].forEach(id=>document.getElementById(id).value='');
+    alert('Password changed successfully!');
+  }catch(e){errEl.textContent='Failed. Please try again.';errEl.classList.add('on');}
+}
+
+async function deletePassenger(id){
+  if(!confirm('Delete this passenger?'))return;
+  await fetch(`${FLYYB_API}/api/profiles?action=passengers&id=${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${authToken}`}});
+  await loadProfileContent();
+}
+
+async function deleteAccount(){
+  const pw=prompt('Enter your password to confirm account deletion:');
+  if(!pw)return;
+  if(!confirm('This will permanently delete your account. Are you sure?'))return;
+  try{
+    const r=await fetch(`${FLYYB_API}/api/profiles?action=delete-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},body:JSON.stringify({password:pw})});
+    const d=await r.json();
+    if(!r.ok){alert(d.error||'Failed to delete');return;}
+    closeProfile();logout();
+    alert('Your account has been deleted.');
+  }catch(e){alert('Failed. Please try again.');}
 }
 
 // -- CHATBOT ---------------------------------------------------
@@ -3005,6 +3292,18 @@ async function airaSend(msg){
   airaThinking=false;
 }
 
+function showTerms(){
+  document.getElementById('terms-ov').classList.add('open');
+}
+function acceptTerms(){
+  document.getElementById('terms-ov').classList.remove('open');
+  // Check whichever checkbox is visible
+  var tEl=document.getElementById('r-terms');
+  var tPhEl=document.getElementById('r-terms-phone');
+  if(tEl)tEl.checked=true;
+  if(tPhEl)tPhEl.checked=true;
+}
+
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(document.getElementById('confirm-ov').classList.contains('open')){closeConfirm();return;}
@@ -3016,5 +3315,50 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
+
+<!-- TERMS & CONDITIONS MODAL -->
+<div class="terms-modal-ov" id="terms-ov">
+  <div class="terms-modal">
+    <div class="terms-modal-header">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.1em">FLY<span style="color:var(--gold)">YB</span> Terms &amp; Conditions</div>
+      <button onclick="document.getElementById('terms-ov').classList.remove('open')" style="background:none;border:none;color:rgba(245,240,232,.4);font-size:1.1rem;cursor:pointer">✕</button>
+    </div>
+    <div class="terms-modal-body">
+      <h3>1. Booking &amp; Payments</h3>
+      <p>All bookings are subject to availability and confirmation. Prices displayed include taxes and fees unless stated otherwise. Payment is processed securely via Stripe using 256-bit SSL encryption. FLYYB reserves the right to cancel bookings where payment cannot be verified. Full payment is required at time of booking.</p>
+
+      <h3>2. Cancellations &amp; Refunds</h3>
+      <p>Cancellations made more than 24 hours before departure are eligible for a full refund to the original payment method within 5-10 business days. Cancellations within 24 hours of departure are non-refundable. FLYYB credits earned on a cancelled booking will be reversed from your account.</p>
+
+      <h3>3. Rescheduling</h3>
+      <p>Bookings may be rescheduled up to 48 hours before the scheduled departure. Rescheduling is subject to availability on the new date. Any price difference will be charged or refunded accordingly. Only one reschedule per booking is permitted.</p>
+
+      <h3>4. FLYYB Credits Programme</h3>
+      <p>You earn 5% of your booking total as FLYYB credits upon confirmed payment. Credits may be applied to future bookings up to a maximum of 20% of the total fare. Credits have no cash value and are non-transferable. Credits associated with cancelled bookings will be reversed. FLYYB reserves the right to modify or discontinue the credits programme with 30 days notice.</p>
+
+      <h3>5. AIRA — AI Concierge</h3>
+      <p>AIRA is an AI-powered assistant designed to help you search and book flights. AIRA uses Google Gemini AI and may occasionally produce inaccurate results — always verify flight details before completing payment. Conversations with AIRA are processed by Google and subject to Google's privacy policy. AIRA does not store your payment information. Final booking terms are governed by these Terms &amp; Conditions, not AIRA's responses.</p>
+
+      <h3>6. Baggage Policy</h3>
+      <p>Economy class: 23kg checked baggage + 7kg cabin baggage. Business class: 32kg checked baggage + 10kg cabin baggage. First class: 40kg checked + 10kg cabin. Excess baggage charges apply at check-in. FLYYB is not responsible for items lost or damaged during transit.</p>
+
+      <h3>7. Passenger Responsibility</h3>
+      <p>Passengers are responsible for ensuring valid travel documents including passport, visa and health requirements for their destination. FLYYB is not liable for denied boarding due to insufficient documentation. Passenger details provided at booking must exactly match travel documents.</p>
+
+      <h3>8. Privacy</h3>
+      <p>Your personal data is collected and stored securely to process bookings and provide our service. We do not sell your data to third parties. Data is processed in accordance with applicable data protection laws. For full details see our Privacy Policy at flyyb.vercel.app.</p>
+
+      <h3>9. Liability</h3>
+      <p>FLYYB acts as an intermediary between passengers and airlines. We are not liable for flight delays, cancellations or disruptions caused by airlines or circumstances beyond our control. Our maximum liability is limited to the value of the booking.</p>
+
+      <h3>10. Governing Law</h3>
+      <p>These terms are governed by applicable law. By creating an account and making bookings you agree to these Terms &amp; Conditions in full. FLYYB reserves the right to update these terms at any time.</p>
+    </div>
+    <div class="terms-modal-footer">
+      <button class="auth-btn" style="margin:0" onclick="acceptTerms()">I ACCEPT THESE TERMS</button>
+      <button class="p-back" onclick="document.getElementById('terms-ov').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
