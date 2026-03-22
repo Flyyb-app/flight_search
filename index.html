@@ -408,12 +408,14 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 .aira-btn-avatar{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
 .aira-pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(212,168,67,.4);animation:airaPulse 2s ease-in-out infinite}
 @keyframes airaPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
-.aira-window{position:fixed;bottom:100px;right:20px;z-index:500;width:380px;height:580px;background:linear-gradient(160deg,#060612 0%,#0d1a2e 50%,#0f1922 100%);border:1px solid rgba(212,168,67,.3);border-radius:20px;display:none;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.8);overflow:hidden}
+.aira-window{position:fixed;bottom:100px;right:20px;z-index:500;width:380px;height:620px;background:linear-gradient(160deg,#060612 0%,#0d1a2e 50%,#0f1922 100%);border:1px solid rgba(212,168,67,.3);border-radius:20px;display:none;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.8);overflow:hidden}
 .aira-window.open{display:flex;animation:airaSlideUp .3s cubic-bezier(.175,.885,.32,1.275)}
 @keyframes airaSlideUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .aira-header{padding:16px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2);flex-shrink:0}
 .aira-avatar-wrap{position:relative;flex-shrink:0}
 .aira-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#d4a843,#b8892e);display:flex;align-items:center;justify-content:center;font-size:1.4rem;position:relative;overflow:hidden}
+.aira-avatar svg{position:absolute;inset:0;width:100%;height:100%}
+.aira-face{transition:all .15s ease}
 .aira-avatar-ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(212,168,67,.5);animation:airaRing 3s linear infinite}
 @keyframes airaRing{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .aira-avatar-ring::before{content:'';position:absolute;top:-2px;left:50%;width:6px;height:6px;background:var(--gold);border-radius:50%;transform:translateX(-50%)}
@@ -427,10 +429,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 .aira-tagline{font-size:.62rem;color:rgba(245,240,232,.4);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
 .aira-close{background:none;border:none;color:rgba(245,240,232,.3);font-size:1rem;cursor:pointer;padding:6px;transition:color .2s;border-radius:50%}
 .aira-close:hover{color:var(--paper);background:rgba(255,255,255,.08)}
-.aira-voice-bar{height:3px;background:rgba(255,255,255,.04);position:relative;overflow:hidden;display:none;flex-shrink:0}
-.aira-voice-bar.active{display:block}
-.aira-voice-fill{height:100%;background:linear-gradient(90deg,var(--gold),#5daa72,var(--gold));background-size:200% 100%;animation:airaVoiceFlow 1.5s linear infinite}
-@keyframes airaVoiceFlow{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.aira-voice-bar{height:36px;background:rgba(0,0,0,.2);position:relative;overflow:hidden;display:none;flex-shrink:0;align-items:center;justify-content:center;gap:3px;padding:0 16px}
+.aira-voice-bar.active{display:flex}
+.aira-voice-bar .vb{width:3px;border-radius:3px;background:var(--gold);animation:airaBar 0.8s ease-in-out infinite;transform-origin:bottom}
+.aira-voice-bar .vb:nth-child(1){height:8px;animation-delay:0s}
+.aira-voice-bar .vb:nth-child(2){height:16px;animation-delay:.1s}
+.aira-voice-bar .vb:nth-child(3){height:24px;animation-delay:.2s}
+.aira-voice-bar .vb:nth-child(4){height:32px;animation-delay:.3s}
+.aira-voice-bar .vb:nth-child(5){height:24px;animation-delay:.4s}
+.aira-voice-bar .vb:nth-child(6){height:16px;animation-delay:.5s}
+.aira-voice-bar .vb:nth-child(7){height:8px;animation-delay:.6s}
+.aira-voice-bar .vb:nth-child(8){height:16px;animation-delay:.7s}
+.aira-voice-bar .vb:nth-child(9){height:24px;animation-delay:.5s}
+.aira-voice-bar .vb:nth-child(10){height:14px;animation-delay:.3s}
+@keyframes airaBar{0%,100%{transform:scaleY(.3);opacity:.5}50%{transform:scaleY(1);opacity:1}}
+.aira-voice-label{font-size:.65rem;color:rgba(245,240,232,.4);letter-spacing:.1em;text-align:center;padding:4px 0;flex-shrink:0}
 .aira-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
 .aira-messages::-webkit-scrollbar{width:3px}
 .aira-messages::-webkit-scrollbar-thumb{background:rgba(212,168,67,.2);border-radius:2px}
@@ -552,7 +565,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
               <span>Your FLYYB credits stay in your account until you use them. No expiry dates, no hidden catches.</span>
             </div>
           </div>
-          <button class="nav-dd-cta" onclick="authUser?openCreditsModal():openAuth('reg')">${authUser?'VIEW MY CREDITS':'JOIN & START EARNING →'}</button>
+          <button class="nav-dd-cta" id="deals-cta-btn" onclick="authUser?openCreditsModal():openAuth()">JOIN &amp; START EARNING &rarr;</button>
         </div>
       </div>
       <div id="nav-auth-area"><a class="nav-cta" onclick="openAuth()">Sign In</a></div>
@@ -921,7 +934,33 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 <div class="aira-window" id="aira-window">
   <div class="aira-header">
     <div class="aira-avatar-wrap">
-      <div class="aira-avatar" id="aira-avatar">&#x2708;</div>
+      <div class="aira-avatar" id="aira-avatar">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Face base -->
+          <circle cx="22" cy="22" r="22" fill="url(#ag)"/>
+          <!-- Hair -->
+          <ellipse cx="22" cy="13" rx="10" ry="8" fill="#1a0a00"/>
+          <rect x="12" y="13" width="20" height="6" fill="#1a0a00"/>
+          <!-- Face skin -->
+          <ellipse cx="22" cy="22" rx="9" ry="11" fill="#f5c9a0"/>
+          <!-- Eyes -->
+          <ellipse id="aira-eye-l" cx="18.5" cy="20" rx="1.5" ry="1.8" fill="#1a1a2e"/>
+          <ellipse id="aira-eye-r" cx="25.5" cy="20" rx="1.5" ry="1.8" fill="#1a1a2e"/>
+          <!-- Eye shine -->
+          <circle cx="19" cy="19.3" r=".5" fill="white"/>
+          <circle cx="26" cy="19.3" r=".5" fill="white"/>
+          <!-- Mouth -->
+          <path id="aira-mouth" d="M18.5 25.5 Q22 28 25.5 25.5" stroke="#c0705a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <!-- Uniform collar -->
+          <path d="M13 38 Q17 31 22 30 Q27 31 31 38" fill="#d4a843"/>
+          <defs>
+            <radialGradient id="ag" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#d4a843"/>
+              <stop offset="100%" stop-color="#b8892e"/>
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
       <div class="aira-avatar-ring"></div>
       <div class="aira-status-dot" id="aira-dot"></div>
     </div>
@@ -932,8 +971,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
     <button class="aira-close" onclick="toggleAira()">&#x2715;</button>
   </div>
   <div class="aira-voice-bar" id="aira-voice-bar">
-    <div class="aira-voice-fill"></div>
+    <div class="vb"></div><div class="vb"></div><div class="vb"></div>
+    <div class="vb"></div><div class="vb"></div><div class="vb"></div>
+    <div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div>
   </div>
+  <div class="aira-voice-label" id="aira-voice-label" style="display:none">Speaking...</div>
   <div class="aira-suggestions" id="aira-sugs">
     <span class="aira-sug" onclick="airaSuggest(this)">Search flights</span>
     <span class="aira-sug" onclick="airaSuggest(this)">My credits</span>
@@ -1479,6 +1521,7 @@ function loginOK(user, token, credits=0){
   localStorage.setItem('flyyb_session', JSON.stringify({user:authUser, token:authToken}));
   closeAuth();
   renderNavUser();
+  updateDealsBtn();
   resetSessionTimers();
 }
 
@@ -1500,6 +1543,10 @@ function closeUserDropdown(){
 
 document.addEventListener('click',()=>closeUserDropdown());
 
+function updateDealsBtn(){
+  var btn=document.getElementById('deals-cta-btn');
+  if(btn)btn.textContent=authUser?'VIEW MY CREDITS':'JOIN & START EARNING →';
+}
 function renderNavUser(){
   const area=document.getElementById('nav-auth-area');
   if(authUser){
@@ -2019,12 +2066,12 @@ function buildPaxForms(){
         </div>
       </div>
       <div class="pf"><label>Gender<span class="req">*</span></label>
-        <select id="pf${i}e" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:11px 13px;width:100%;outline:none;-webkit-appearance:none">
-          <option value="">Select gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-          <option value="prefer_not">Prefer not to say</option>
+        <select id="pf${i}e" class="field-select" style="color-scheme:dark;padding:11px 13px">
+          <option value="" style="background:#0f1922;color:rgba(245,240,232,.5)">Select gender</option>
+          <option value="male" style="background:#0f1922;color:var(--paper)">Male</option>
+          <option value="female" style="background:#0f1922;color:var(--paper)">Female</option>
+          <option value="other" style="background:#0f1922;color:var(--paper)">Other</option>
+          <option value="prefer_not" style="background:#0f1922;color:var(--paper)">Prefer not to say</option>
         </select>
       </div>
       <div class="pf"><label>Passport / ID</label><input type="text" placeholder="A12345678" id="pf${i}d"></div>
@@ -2462,6 +2509,108 @@ async function submitReschedule(ref){
 }
 
 
+function downloadBookingPDF(){
+  var f=curFlight;
+  var rt=window._roundTripReturn||null;
+  var ref=document.getElementById('bref')?.textContent||'';
+  var creditsMsg=document.getElementById('credits-earned-msg')?.textContent||'';
+  var paxCount=parseInt(document.getElementById('pax')?.value)||1;
+  var sym=f?(f.price?.symbol||'$'):'$';
+  var depDate=document.getElementById('dep-d')?.value||'';
+  var retDate=document.getElementById('ret-d')?.value||'';
+  var paxRows='';
+  for(var i=0;i<paxCount;i++){
+    var fn=document.getElementById('pf'+i+'a')?.value||'';
+    var ln=document.getElementById('pf'+i+'b')?.value||'';
+    var dob=document.getElementById('pf'+i+'c')?.value||'';
+    var gender=document.getElementById('pf'+i+'e')?.value||'';
+    if(fn||ln){
+      paxRows+='<tr>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+(i+1)+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+fn+' '+ln+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+dob+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+gender+'</td>'
+        +'</tr>';
+    }
+  }
+  var price=f?sym+(f.price?.perPerson||0).toLocaleString()+' '+(f.price?.currency||'USD'):'';
+  var retPrice=rt?sym+(rt.price?.perPerson||0).toLocaleString()+' '+(rt.price?.currency||'USD'):'';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>FLYYB Booking '+ref+'</title>'
+    +'<style>'
+    +'body{font-family:Arial,sans-serif;color:#1a1a2e;margin:0;padding:40px;background:#fff}'
+    +'.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #d4a843}'
+    +'.logo{font-size:28px;font-weight:900;letter-spacing:4px;color:#0a0a0f}'
+    +'.logo span{color:#d4a843}'
+    +'.tagline{font-size:11px;color:#888;letter-spacing:2px;margin-top:2px}'
+    +'.ref-box{text-align:right}'
+    +'.ref-label{font-size:10px;color:#888;letter-spacing:2px;text-transform:uppercase}'
+    +'.ref-val{font-size:22px;font-family:monospace;font-weight:700;color:#d4a843;letter-spacing:3px}'
+    +'.status-badge{display:inline-block;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:20px;padding:4px 14px;font-size:11px;font-weight:600;letter-spacing:1px;margin-top:6px}'
+    +'.section{margin-bottom:24px}'
+    +'.section-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #eee}'
+    +'.route-hero{display:flex;align-items:center;justify-content:center;gap:24px;background:#f8f4e8;border-radius:8px;padding:20px;margin-bottom:20px;flex-wrap:wrap}'
+    +'.route-city{text-align:center}'
+    +'.route-code{font-size:32px;font-weight:900;color:#0a0a0f;letter-spacing:2px}'
+    +'.route-name{font-size:11px;color:#888}'
+    +'.route-arrow{font-size:24px;color:#d4a843}'
+    +'.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}'
+    +'.info-item{background:#f9f9f9;border-radius:4px;padding:10px 14px}'
+    +'.info-label{font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}'
+    +'.info-val{font-size:13px;font-weight:600;color:#1a1a2e}'
+    +'table{width:100%;border-collapse:collapse;font-size:13px}'
+    +'th{background:#f0ead8;padding:10px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#888}'
+    +'.footer{margin-top:32px;padding-top:16px;border-top:1px solid #eee;text-align:center;color:#aaa;font-size:11px}'
+    +'.credits-row{background:#f8f4e8;border:1px solid #d4a843;border-radius:4px;padding:10px 14px;margin-top:12px;font-size:13px;color:#b8860b}'
+    +'</style></head><body>'
+    +'<div class="header">'
+    +'<div><div class="logo">FLY<span>YB</span></div><div class="tagline">fly with vibe</div></div>'
+    +'<div class="ref-box"><div class="ref-label">Booking Reference</div><div class="ref-val">'+ref+'</div><div class="status-badge">&#x2713; CONFIRMED</div></div>'
+    +'</div>'
+    +(f?'<div class="route-hero">'
+      +'<div class="route-city"><div class="route-code">'+(f.origin?.code||'')+'</div><div class="route-name">'+(f.origin?.city||'')+'</div></div>'
+      +'<div class="route-arrow">&#x2708;</div>'
+      +'<div class="route-city"><div class="route-code">'+(f.destination?.code||'')+'</div><div class="route-name">'+(f.destination?.city||'')+'</div></div>'
+      +(rt?'<div style="margin:0 16px;color:#ccc;font-size:20px">+</div>'
+        +'<div class="route-city"><div class="route-code">'+rt.origin?.code+'</div><div class="route-name">Return</div></div>'
+        +'<div class="route-arrow">&#x2708;</div>'
+        +'<div class="route-city"><div class="route-code">'+rt.destination?.code+'</div></div>':'')
+      +'</div>':'')
+    +'<div class="section"><div class="section-title">Outbound Flight</div>'
+    +'<div class="info-grid">'
+    +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+depDate+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+(f?f.airline?.name:'')+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Departure</div><div class="info-val">'+(f?f.departure:'')+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Arrival</div><div class="info-val">'+(f?f.arrival:'')+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Duration</div><div class="info-val">'+(f?f.duration:'')+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Cabin</div><div class="info-val">'+(f?f.cabin.charAt(0).toUpperCase()+f.cabin.slice(1):'')+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+price+'</div></div>'
+    +'</div></div>'
+    +(rt?'<div class="section"><div class="section-title">Return Flight</div>'
+      +'<div class="info-grid">'
+      +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+retDate+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+rt.airline?.name+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Departure</div><div class="info-val">'+rt.departure+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Arrival</div><div class="info-val">'+rt.arrival+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+retPrice+'</div></div>'
+      +'</div></div>':'')
+    +(paxRows?'<div class="section"><div class="section-title">Passengers</div>'
+      +'<table><thead><tr><th>#</th><th>Name</th><th>Date of Birth</th><th>Gender</th></tr></thead>'
+      +'<tbody>'+paxRows+'</tbody></table></div>':'')
+    +(creditsMsg?'<div class="credits-row">'+creditsMsg+'</div>':'')
+    +'<div class="footer">Generated by FLYYB &middot; flyyb.vercel.app &middot; '
+    +new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
+    +'<br>Please carry this confirmation to the airport. Safe travels! &#x2708;</div>'
+    +'</body></html>';
+  var win=window.open('','_blank','width=800,height=900');
+  if(!win){alert('Please allow pop-ups for PDF download');return;}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(function(){win.print();},500);
+}
+
+
 // ── SAVED PASSENGERS & PROFILE ───────────────────────────────
 let savedPassengers = [];
 
@@ -2475,12 +2624,24 @@ async function loadSavedPassengers(){
 
 async function savePassengersFromBooking(passengers){
   if(!authToken||!passengers.length)return;
-  try{
-    await fetch(`${FLYYB_API}/api/profiles?action=passengers`,{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},
-      body:JSON.stringify({passengers})
-    });
-  }catch(e){}
+  for(var i=0;i<passengers.length;i++){
+    const saveEl=document.getElementById('save-pax-'+i);
+    if(saveEl&&saveEl.checked){
+      try{
+        await fetch(`${FLYYB_API}/api/profiles?action=passengers`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${authToken}`},
+          body:JSON.stringify({
+            firstName:passengers[i].firstName,
+            lastName:passengers[i].lastName,
+            dob:passengers[i].dob||null,
+            passportNo:passengers[i].passportNo||null,
+            isPrimary:i===0&&savedPassengers.length===0
+          })
+        });
+      }catch(e){console.warn('Failed to save passenger',i);}
+    }
+  }
 }
 
 function selectProfile(id){
@@ -2673,13 +2834,15 @@ function initVoices(){
 }
 initVoices();
 
-function airaSpeak(text){
+var _airaLipInterval=null;
+function airaSpeak(text,emotion){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
-  var clean=text.replace(/<[^>]+>/g,'').replace(/[★✈✦🎉💺🧳📱✉]/g,'').slice(0,200);
+  if(_airaLipInterval){clearInterval(_airaLipInterval);_airaLipInterval=null;}
+  var clean=text.replace(/<[^>]+>/g,'').replace(/[★✈✦🎉💺🧳📱✉]/gu,'').slice(0,220);
   var utt=new SpeechSynthesisUtterance(clean);
   if(airaVoice)utt.voice=airaVoice;
-  utt.rate=1.0;utt.pitch=1.05;utt.volume=0.9;
+  utt.rate=0.98;utt.pitch=1.08;utt.volume=0.95;
   utt.onstart=function(){
     var wrap=document.getElementById('aira-avatar')?.parentElement;
     if(wrap)wrap.classList.add('aira-speaking');
@@ -2687,16 +2850,60 @@ function airaSpeak(text){
     if(tag)tag.textContent='Speaking...';
     var bar=document.getElementById('aira-voice-bar');
     if(bar)bar.classList.add('active');
+    var lbl=document.getElementById('aira-voice-label');
+    if(lbl)lbl.style.display='block';
+    // Lip sync animation
+    var mouth=document.getElementById('aira-mouth');
+    if(mouth){
+      var open=false;
+      _airaLipInterval=setInterval(function(){
+        open=!open;
+        if(mouth){
+          mouth.setAttribute('d',open
+            ?'M18.5 25.5 Q22 29.5 25.5 25.5'
+            :'M18.5 25.5 Q22 28 25.5 25.5');
+        }
+      },120);
+    }
+    // Emotion face
+    airaSetEmotion(emotion||'neutral');
   };
   utt.onend=function(){
+    if(_airaLipInterval){clearInterval(_airaLipInterval);_airaLipInterval=null;}
+    var mouth=document.getElementById('aira-mouth');
+    if(mouth)mouth.setAttribute('d','M18.5 25.5 Q22 28 25.5 25.5');
     var wrap=document.getElementById('aira-avatar')?.parentElement;
     if(wrap)wrap.classList.remove('aira-speaking');
     var tag=document.getElementById('aira-tagline');
     if(tag)tag.textContent='AI Reservations Assistant';
     var bar=document.getElementById('aira-voice-bar');
     if(bar)bar.classList.remove('active');
+    var lbl=document.getElementById('aira-voice-label');
+    if(lbl)lbl.style.display='none';
+    airaSetEmotion('neutral');
   };
+  utt.onerror=function(){if(_airaLipInterval){clearInterval(_airaLipInterval);_airaLipInterval=null;}};
   window.speechSynthesis.speak(utt);
+}
+
+function airaSetEmotion(emotion){
+  var eyeL=document.getElementById('aira-eye-l');
+  var eyeR=document.getElementById('aira-eye-r');
+  var mouth=document.getElementById('aira-mouth');
+  if(!eyeL||!eyeR||!mouth)return;
+  if(emotion==='happy'){
+    eyeL.setAttribute('ry','1.5');eyeR.setAttribute('ry','1.5');
+    mouth.setAttribute('d','M18 25 Q22 30 26 25');
+  }else if(emotion==='thinking'){
+    eyeL.setAttribute('ry','0.8');eyeR.setAttribute('ry','1.8');
+    mouth.setAttribute('d','M18.5 26 Q22 27 25.5 26');
+  }else if(emotion==='excited'){
+    eyeL.setAttribute('ry','2');eyeR.setAttribute('ry','2');
+    mouth.setAttribute('d','M17.5 25 Q22 31 26.5 25');
+  }else{
+    eyeL.setAttribute('ry','1.8');eyeR.setAttribute('ry','1.8');
+    mouth.setAttribute('d','M18.5 25.5 Q22 28 25.5 25.5');
+  }
 }
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────
@@ -2717,7 +2924,7 @@ function airaGreet(){
     :"I can search flights and answer questions. Sign in to book and manage your trips!";
   setTimeout(function(){
     airaAddMsg('aira',line1+' \u2708<br><br>'+line2);
-    airaSpeak(line1);
+    airaSpeak(line1,'happy');
     airaShowSuggestions(authUser
       ?['Search flights','My trips','My credits','Cancellation policy']
       :['Search flights','Baggage rules','How credits work','Check-in help']
@@ -2777,6 +2984,7 @@ function airaShowTyping(){
   if(dot)dot.parentElement.classList.add('aira-thinking');
   var tag=document.getElementById('aira-tagline');
   if(tag)tag.textContent='Thinking...';
+  airaSetEmotion('thinking');
   var msgs=document.getElementById('aira-messages');
   var wrap=document.createElement('div');
   wrap.className='aira-msg aira typing';
@@ -2799,6 +3007,7 @@ function airaHideTyping(){
   if(dot)dot.parentElement.classList.remove('aira-thinking');
   var tag=document.getElementById('aira-tagline');
   if(tag)tag.textContent='AI Reservations Assistant';
+  airaSetEmotion('neutral');
 }
 
 // ── FLIGHT RESULTS ────────────────────────────────────────────
