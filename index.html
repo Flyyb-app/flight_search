@@ -2341,129 +2341,161 @@ async function submitReschedule(ref){
 
 // -- CHATBOT ---------------------------------------------------
 // ── AIRA AI AGENT ─────────────────────────────────────────────
+// ── AIRA STATE MACHINE ────────────────────────────────────────
 let airaOpen=false;
 let airaHistory=[];
 let airaThinking=false;
 let airaVoice=null;
 let airaRecog=null;
 let airaListening=false;
-let airaSelectedFlight=null;
-let airaFlightResults=[];
 
-// Currency symbol helper
+// AIRA flow state
+let airaState={
+  flow:null,          // null | 'booking' | 'trips' | 'credits'
+  step:null,          // current step in flow
+  flight:null,        // selected outbound flight
+  returnFlight:null,  // selected return flight
+  flightResults:[],   // search results
+  passengers:[],      // collected passenger data
+  paxCount:1,
+  cabin:'economy',
+  addons:{},
+  seats:[],
+  useCredits:false,
+  trips:null          // loaded trips data
+};
+
+function airaResetState(){
+  airaState={flow:null,step:null,flight:null,returnFlight:null,flightResults:[],passengers:[],paxCount:1,cabin:'economy',addons:{},seats:[],useCredits:false,trips:null};
+}
+
 function getSymbol(){return authUser?.currencySymbol||'$';}
 
-// ── Init voices ───────────────────────────────────────────────
+// ── VOICES ────────────────────────────────────────────────────
 function initVoices(){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.onvoiceschanged=function(){
     var voices=window.speechSynthesis.getVoices();
-    // Prefer a warm female English voice
     airaVoice=voices.find(v=>v.name.includes('Samantha'))||
               voices.find(v=>v.name.includes('Karen'))||
               voices.find(v=>v.name.includes('Victoria'))||
-              voices.find(v=>v.name.includes('Fiona'))||
               voices.find(v=>v.lang==='en-GB'&&v.name.toLowerCase().includes('female'))||
-              voices.find(v=>v.lang.startsWith('en')&&v.name.toLowerCase().includes('female'))||
-              voices.find(v=>v.lang.startsWith('en'))||
-              voices[0]||null;
+              voices.find(v=>v.lang.startsWith('en'))||voices[0]||null;
   };
   window.speechSynthesis.getVoices();
 }
 initVoices();
 
-// ── Speak ─────────────────────────────────────────────────────
 function airaSpeak(text){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
-  var clean=text.replace(/<[^>]+>/g,'').replace(/[✈✦🎉💺🧳]/g,'');
+  var clean=text.replace(/<[^>]+>/g,'').replace(/[★✈✦🎉💺🧳📱✉]/g,'').slice(0,200);
   var utt=new SpeechSynthesisUtterance(clean);
   if(airaVoice)utt.voice=airaVoice;
   utt.rate=1.0;utt.pitch=1.05;utt.volume=0.9;
   utt.onstart=function(){
-    document.getElementById('aira-avatar').parentElement.classList.add('aira-speaking');
-    document.getElementById('aira-tagline').textContent='Speaking...';
-    document.getElementById('aira-voice-bar').classList.add('active');
+    var wrap=document.getElementById('aira-avatar')?.parentElement;
+    if(wrap)wrap.classList.add('aira-speaking');
+    var tag=document.getElementById('aira-tagline');
+    if(tag)tag.textContent='Speaking...';
+    var bar=document.getElementById('aira-voice-bar');
+    if(bar)bar.classList.add('active');
   };
   utt.onend=function(){
-    document.getElementById('aira-avatar').parentElement.classList.remove('aira-speaking');
-    document.getElementById('aira-tagline').textContent='AI Reservations Assistant';
-    document.getElementById('aira-voice-bar').classList.remove('active');
+    var wrap=document.getElementById('aira-avatar')?.parentElement;
+    if(wrap)wrap.classList.remove('aira-speaking');
+    var tag=document.getElementById('aira-tagline');
+    if(tag)tag.textContent='AI Reservations Assistant';
+    var bar=document.getElementById('aira-voice-bar');
+    if(bar)bar.classList.remove('active');
   };
   window.speechSynthesis.speak(utt);
 }
 
-// ── Toggle AIRA ───────────────────────────────────────────────
+// ── OPEN / CLOSE ──────────────────────────────────────────────
 function toggleAira(){
   airaOpen=!airaOpen;
   var win=document.getElementById('aira-window');
   win.classList.toggle('open',airaOpen);
-  if(airaOpen&&airaHistory.length===0){
-    airaGreet();
-  }
+  if(airaOpen&&airaHistory.length===0) airaGreet();
 }
 
 function airaGreet(){
   var name=authUser?authUser.name.split(' ')[0]:'there';
   var hour=new Date().getHours();
   var greet=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
-  var msg,line1;
-  if(authUser){
-    line1=greet+', '+name+"! I'm AIRA, your personal flight concierge.";
-    msg=line1+" \u2708\n\nI can see your profile and credits. Just tell me where you'd like to fly!";
-  }else{
-    line1=greet+', '+name+"! I'm AIRA, your personal flight concierge.";
-    msg=line1+" \u2708\n\nI can search flights, check credits, explain policies, or help you book. Where to?";
-  }
+  var line1=greet+', '+name+"! I'm AIRA, your personal flight concierge.";
+  var line2=authUser
+    ?"I can search flights, show your trips, check credits, and book for you. Just tell me what you need!"
+    :"I can search flights and answer questions. Sign in to book and manage your trips!";
   setTimeout(function(){
-    airaAddMsg('aira',msg);
+    airaAddMsg('aira',line1+' \u2708<br><br>'+line2);
     airaSpeak(line1);
+    airaShowSuggestions(authUser
+      ?['Search flights','My trips','My credits','Cancellation policy']
+      :['Search flights','Baggage rules','How credits work','Check-in help']
+    );
   },400);
 }
 
-// ── Add message ───────────────────────────────────────────────
+// ── MESSAGES ──────────────────────────────────────────────────
 function airaAddMsg(role,html,extraClass){
   var msgs=document.getElementById('aira-messages');
   var sugs=document.getElementById('aira-sugs');
   if(sugs)sugs.style.display='none';
-
   var wrap=document.createElement('div');
   wrap.className='aira-msg '+(role==='aira'?'aira':'user')+(extraClass?' '+extraClass:'');
-
+  var av=document.createElement('div');
   if(role==='aira'){
-    var av=document.createElement('div');
-    av.className='aira-msg-avatar';
-    av.textContent='✈';
-    wrap.appendChild(av);
-  } else {
-    var av=document.createElement('div');
+    av.className='aira-msg-avatar';av.textContent='\u2708';
+  }else{
     av.className='aira-msg-user-avatar';
     av.textContent=authUser?(authUser.name[0].toUpperCase()):'U';
-    wrap.appendChild(av);
   }
-
+  wrap.appendChild(av);
   var bubble=document.createElement('div');
   bubble.className='aira-bubble';
   bubble.innerHTML=html.split('\n').join('<br>');
   wrap.appendChild(bubble);
-
   msgs.appendChild(wrap);
   msgs.scrollTop=msgs.scrollHeight;
   return wrap;
 }
 
-// ── Typing indicator ──────────────────────────────────────────
-function airaShowTyping(){
-  var msgs=document.getElementById('aira-messages');
-  var dot=document.getElementById('aira-dot');
-  if(dot){dot.parentElement.classList.add('aira-thinking');}
-  document.getElementById('aira-tagline').textContent='Thinking...';
+function airaShowSuggestions(items){
+  var sugs=document.getElementById('aira-sugs');
+  if(!sugs)return;
+  sugs.innerHTML=items.map(function(s){
+    return '<span class="aira-sug" onclick="airaSuggest(this)">'+s+'</span>';
+  }).join('');
+  sugs.style.display='flex';
+}
 
+function airaAddButtons(msg,buttons){
+  var btns=document.createElement('div');
+  btns.className='aira-action-btns';
+  buttons.forEach(function(b){
+    var el=document.createElement('button');
+    el.className='aira-action-btn'+(b.primary?' primary':'');
+    el.textContent=b.label;
+    el.onclick=b.action;
+    btns.appendChild(el);
+  });
+  msg.querySelector('.aira-bubble').appendChild(btns);
+  return btns;
+}
+
+function airaShowTyping(){
+  var dot=document.getElementById('aira-dot');
+  if(dot)dot.parentElement.classList.add('aira-thinking');
+  var tag=document.getElementById('aira-tagline');
+  if(tag)tag.textContent='Thinking...';
+  var msgs=document.getElementById('aira-messages');
   var wrap=document.createElement('div');
   wrap.className='aira-msg aira typing';
   wrap.id='aira-typing';
   var av=document.createElement('div');
-  av.className='aira-msg-avatar';av.textContent='✈';
+  av.className='aira-msg-avatar';av.textContent='\u2708';
   var bubble=document.createElement('div');
   bubble.className='aira-bubble';
   bubble.innerHTML='<div class="aira-typing-dots"><span></span><span></span><span></span></div>';
@@ -2478,84 +2510,410 @@ function airaHideTyping(){
   if(t)t.remove();
   var dot=document.getElementById('aira-dot');
   if(dot)dot.parentElement.classList.remove('aira-thinking');
-  document.getElementById('aira-tagline').textContent='AI Reservations Assistant';
+  var tag=document.getElementById('aira-tagline');
+  if(tag)tag.textContent='AI Reservations Assistant';
 }
 
-// ── Flight result cards ───────────────────────────────────────
-function airaShowFlights(flights,from,to){
-  airaFlightResults=flights;
-  var html='Found <b>'+flights.length+' flights</b> from '+from+' to '+to+':<br><br>';
+// ── FLIGHT RESULTS ────────────────────────────────────────────
+function airaShowFlights(flights,from,to,date){
+  airaState.flightResults=flights;
+  airaState.flow='booking';
+  airaState.step='select_flight';
   var sym=getSymbol();
-  flights.slice(0,3).forEach(function(f,i){
-    html+='<div class="aira-flight-card" id="aira-fc-'+i+'" onclick="airaSelectFlight('+i+')">'
+  var header='Here are the best flights from <b>'+from+'</b> to <b>'+to+'</b>'+(date?' on <b>'+date+'</b>':'')+':<br><br>';
+  var cards=flights.slice(0,3).map(function(f,i){
+    return '<div class="aira-flight-card" id="aira-fc-'+i+'" onclick="airaSelectFlight('+i+')">'
       +'<div class="aira-flight-row">'
-      +'<div class="aira-flight-times">'+f.departure+' &rarr; '+f.arrival+'</div>'
+      +'<div class="aira-flight-times">'+f.departure+' \u2192 '+f.arrival+'</div>'
       +'<div class="aira-flight-price">'+sym+(f.price?.perPerson||0).toLocaleString()+'</div>'
       +'</div>'
-      +'<div class="aira-flight-detail">'+f.airline?.name+' &middot; '+f.duration+(f.stops===0?' &middot; Nonstop':' &middot; '+f.stops+' stop')+'</div>'
+      +'<div class="aira-flight-detail">'+f.airline?.name+' \u00b7 '+f.duration
+      +(f.stops===0?' \u00b7 Nonstop':' \u00b7 '+f.stops+' stop')+'</div>'
       +'</div>';
-  });
-  if(flights.length>3)html+='<div style="font-size:.68rem;color:rgba(245,240,232,.4);margin-top:6px">...and '+(flights.length-3)+' more</div>';
-  airaAddMsg('aira',html);
-  airaSpeak('I found '+Math.min(flights.length,3)+' great options. Which one works for you?');
+  }).join('');
+  var extra=flights.length>3?'<div style="font-size:.68rem;color:rgba(245,240,232,.4);margin-top:6px">+'+(flights.length-3)+' more available</div>':'';
+  var msg=airaAddMsg('aira',header+cards+extra);
+  var speak='I found '+Math.min(flights.length,3)+' great flights. Tap one to select it!';
+  airaSpeak(speak);
+  airaHistory.push({role:'assistant',content:'Showed '+flights.length+' flights from '+from+' to '+to});
 }
 
 function airaSelectFlight(idx){
-  airaSelectedFlight=airaFlightResults[idx];
+  var f=airaState.flightResults[idx];
+  if(!f)return;
+  airaState.flight=f;
+  airaState.step='confirm_flight';
+  // Highlight selection
   document.querySelectorAll('.aira-flight-card').forEach(function(el){el.classList.remove('selected');});
   var el=document.getElementById('aira-fc-'+idx);
   if(el)el.classList.add('selected');
-  var f=airaSelectedFlight;
   var sym=getSymbol();
-  var html='Great choice! <b>'+f.airline?.name+'</b> '+f.departure+' &rarr; '+f.arrival
-    +' for <b>'+sym+(f.price?.perPerson||0).toLocaleString()+'</b> per person.<br><br>';
+  var html='Great choice! <b>'+f.airline?.name+'</b><br>'
+    +f.origin?.code+' \u2192 '+f.destination?.code
+    +' \u00b7 '+f.departure+' - '+f.arrival
+    +' \u00b7 '+f.duration+'<br>'
+    +'<b>'+sym+(f.price?.perPerson||0).toLocaleString()+'</b> per person';
   if(authUser&&userCredits>0){
-    html+='You have <b>'+sym+userCredits.toFixed(2)+'</b> credits available. ';
+    html+='<br><span style="color:#5daa72;font-size:.75rem">\u2756 You have '+sym+userCredits.toFixed(2)+' credits available</span>';
   }
-  html+='Shall I proceed to booking?';
   var msg=airaAddMsg('aira',html);
-  // Add action buttons
-  var btns=document.createElement('div');
-  btns.className='aira-action-btns';
-  btns.innerHTML='<button class="aira-action-btn primary" onclick="airaBookFlight()">Book Now</button>'
-    +'<button class="aira-action-btn" onclick="airaAddMsg(&quot;user&quot;,&quot;Show me other options&quot;);airaSend(&quot;Show me other flight options&quot;)">Other options</button>'
-    +'<button class="aira-action-btn" onclick="toggleAira();document.getElementById(&quot;flight-ov&quot;).classList.add(&quot;open&quot;);showFlight('+flights.indexOf(f)+')">View Details</button>';
-  msg.querySelector('.aira-bubble').appendChild(btns);
-  airaSpeak('Great choice! Shall I proceed to booking?');
+  airaAddButtons(msg,[
+    {label:'Book Now \u2192',primary:true,action:function(){airaStartBooking();}},
+    {label:'Different flight',action:function(){airaAddMsg('user','Show other options');airaAddMsg('aira','Sure! Here are all the options again.');airaShowFlights(airaState.flightResults,'','');}},
+    {label:'View full details',action:function(){airaOpenFlightModal(f);}}
+  ]);
+  airaSpeak('Shall I proceed to booking?');
+  airaHistory.push({role:'assistant',content:'User selected '+f.airline?.name+' '+f.departure+' to '+f.arrival});
 }
 
-function airaBookFlight(){
-  if(!airaSelectedFlight){airaAddMsg('aira','Please select a flight first.');return;}
+function airaOpenFlightModal(f){
+  if(!flights.includes(f))flights.push(f);
+  toggleAira();
+  showFlight(flights.indexOf(f));
+}
+
+// ── BOOKING FLOW ──────────────────────────────────────────────
+function airaStartBooking(){
   if(!authUser){
-    airaAddMsg('aira','You need to be signed in to book. Shall I open the sign in screen?');
-    var msg=airaAddMsg('aira','');
-    var btns=document.createElement('div');
-    btns.className='aira-action-btns';
-    btns.innerHTML='<button class="aira-action-btn primary" onclick="toggleAira();openAuth()">Sign In</button>';
-    msg.querySelector('.aira-bubble').appendChild(btns);
+    var msg=airaAddMsg('aira',"You need to be signed in to book. Shall I open the sign in screen?");
+    airaAddButtons(msg,[
+      {label:'Sign In',primary:true,action:function(){toggleAira();openAuth();}},
+      {label:'Maybe later',action:function(){airaAddMsg('aira','No problem! Let me know when you are ready.');}}
+    ]);
     return;
   }
-  airaAddMsg('aira','Opening booking for your selected flight...');
-  airaSpeak('Opening booking now!');
-  setTimeout(function(){
-    toggleAira();
-    curFlight=airaSelectedFlight;
-    // Push flight into flights array if not there
-    if(!flights.includes(curFlight))flights.push(curFlight);
-    window._roundTripReturn=null;
-    document.getElementById('finfo').style.display='block';
-    document.getElementById('pay-view').style.display='none';
-    var f=curFlight;
-    document.getElementById('fm-al').textContent=f.airline?.name+' · '+f.flightNumber;
-    document.getElementById('fm-rt').textContent=f.origin?.code+' → '+f.destination?.code;
-    document.getElementById('fm-pr').textContent=(f.price?.symbol||'$')+(f.price?.perPerson||0).toLocaleString()+' '+(f.price?.currency||'USD');
-    document.getElementById('fm-dets').innerHTML='<div class="fm-item"><label>Departure</label><span>'+f.departure+'</span></div><div class="fm-item"><label>Arrival</label><span>'+f.arrival+'</span></div><div class="fm-item"><label>Duration</label><span>'+f.duration+'</span></div><div class="fm-item"><label>Cabin</label><span>'+f.cabin.charAt(0).toUpperCase()+f.cabin.slice(1)+'</span></div>';
-    document.getElementById('fm-action').innerHTML='<button class="fm-book" onclick="startPay()">BOOK THIS FLIGHT</button>';
-    document.getElementById('flight-ov').classList.add('open');
-  },800);
+  airaState.flow='booking';
+  airaState.step='pax_count';
+  var n=parseInt(document.getElementById('pax').value)||1;
+  airaState.paxCount=n;
+  var html='How many passengers? Currently set to <b>'+n+'</b>.';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'1 Adult',action:function(){airaSetPax(1);}},
+    {label:'2 Adults',action:function(){airaSetPax(2);}},
+    {label:'3 Adults',action:function(){airaSetPax(3);}},
+    {label:'Keep '+n,primary:true,action:function(){airaSetPax(n);}}
+  ]);
+  airaSpeak('How many passengers will be travelling?');
 }
 
-// ── Voice input ───────────────────────────────────────────────
+function airaSetPax(n){
+  airaState.paxCount=n;
+  document.getElementById('pax').value=n;
+  airaState.step='pax_details';
+  airaState.passengers=[];
+  airaAddMsg('user',n+' passenger'+(n>1?'s':''));
+  airaCollectPassenger(0);
+}
+
+function airaCollectPassenger(idx){
+  if(idx>=airaState.paxCount){
+    airaState.step='seats';
+    airaAskSeats();
+    return;
+  }
+  // Check if we have saved passengers to offer
+  if(idx===0&&savedPassengers&&savedPassengers.length){
+    var html='<b>Passenger '+(idx+1)+'</b> - Select a saved profile or enter details:';
+    var msg=airaAddMsg('aira',html);
+    var btns=document.createElement('div');
+    btns.className='aira-action-btns';
+    btns.style.flexDirection='column';btns.style.alignItems='flex-start';
+    savedPassengers.slice(0,3).forEach(function(p){
+      var btn=document.createElement('button');
+      btn.className='aira-action-btn';
+      btn.style.width='100%';btn.style.textAlign='left';
+      btn.textContent=p.firstName+' '+p.lastName+(p.passportNo?' \u00b7 '+p.passportNo:'');
+      btn.onclick=function(){
+        airaState.passengers.push({firstName:p.firstName,lastName:p.lastName,dob:p.dob||null,passportNo:p.passportNo||null,seat:null});
+        airaAddMsg('user',p.firstName+' '+p.lastName+' selected');
+        airaCollectPassenger(idx+1);
+      };
+      btns.appendChild(btn);
+    });
+    var enterBtn=document.createElement('button');
+    enterBtn.className='aira-action-btn primary';
+    enterBtn.textContent='Enter new passenger';
+    enterBtn.onclick=function(){airaEnterPassengerManually(idx);};
+    btns.appendChild(enterBtn);
+    msg.querySelector('.aira-bubble').appendChild(btns);
+  }else{
+    airaEnterPassengerManually(idx);
+  }
+}
+
+function airaEnterPassengerManually(idx){
+  // Open the full booking modal pre-filled to step 1 for best UX
+  // AIRA hands off to the existing modal which has all validations
+  airaState.step='modal_booking';
+  var html='Let me open the full booking form for you. All your details will be pre-filled!';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Open Booking Form',primary:true,action:function(){
+      // Set up curFlight and open modal
+      curFlight=airaState.flight;
+      window._roundTripReturn=airaState.returnFlight||null;
+      if(!flights.includes(curFlight))flights.push(curFlight);
+      toggleAira();
+      // Open flight modal then auto-start pay
+      document.getElementById('finfo').style.display='none';
+      document.getElementById('pay-view').style.display='block';
+      document.getElementById('flight-ov').classList.add('open');
+      payStep=1;selSeats=[];selectedAddons={};applyCredits=false;
+      Promise.all([loadSavedPassengers(),fetchCredits()]).then(function(){
+        buildPaxForms();setStep(1);
+      });
+    }},
+    {label:'Cancel',action:function(){
+      airaState.step='select_flight';
+      airaAddMsg('aira','No problem. Is there anything else I can help with?');
+    }}
+  ]);
+  airaSpeak('Opening the booking form for you!');
+}
+
+// ── SEAT SELECTION ────────────────────────────────────────────
+function airaAskSeats(){
+  var html='Would you like to select specific seats? Or skip and accept random assignment?';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Select seats',primary:true,action:function(){
+      airaState.step='selecting_seats';
+      airaShowSeatMap();
+    }},
+    {label:'Skip - any seat',action:function(){
+      airaState.seats=[];
+      airaState.step='addons';
+      airaAddMsg('user','Skip seat selection');
+      airaAskAddons();
+    }}
+  ]);
+  airaSpeak('Would you like to choose your seats?');
+}
+
+function airaShowSeatMap(){
+  // Open modal at seat step
+  curFlight=airaState.flight;
+  window._roundTripReturn=airaState.returnFlight||null;
+  if(!flights.includes(curFlight))flights.push(curFlight);
+  var html='Opening the seat map for you!';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Open Seat Map',primary:true,action:function(){
+      document.getElementById('finfo').style.display='none';
+      document.getElementById('pay-view').style.display='block';
+      document.getElementById('flight-ov').classList.add('open');
+      payStep=1;selSeats=[];selectedAddons={};applyCredits=false;
+      Promise.all([loadSavedPassengers(),fetchCredits()]).then(function(){
+        buildPaxForms();setStep(2);
+      });
+      toggleAira();
+    }}
+  ]);
+}
+
+// ── ADD-ONS ───────────────────────────────────────────────────
+function airaAskAddons(){
+  var html='Would you like to add any extras to your journey?<br><br>'
+    +'<span style="font-size:.75rem;color:rgba(245,240,232,.5)">Extra baggage, meals, lounge access and more</span>';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Browse add-ons',primary:true,action:function(){
+      curFlight=airaState.flight;
+      window._roundTripReturn=airaState.returnFlight||null;
+      if(!flights.includes(curFlight))flights.push(curFlight);
+      document.getElementById('finfo').style.display='none';
+      document.getElementById('pay-view').style.display='block';
+      document.getElementById('flight-ov').classList.add('open');
+      payStep=1;selSeats=airaState.seats||[];selectedAddons={};applyCredits=false;
+      Promise.all([loadSavedPassengers(),fetchCredits()]).then(function(){
+        buildPaxForms();setStep(3);
+      });
+      toggleAira();
+    }},
+    {label:'No extras needed',action:function(){
+      airaState.step='payment';
+      airaAddMsg('user','No add-ons');
+      airaShowPaymentSummary();
+    }}
+  ]);
+  airaSpeak('Would you like any extras for your journey?');
+}
+
+// ── PAYMENT SUMMARY ───────────────────────────────────────────
+function airaShowPaymentSummary(){
+  var f=airaState.flight;
+  var n=airaState.paxCount;
+  var sym=getSymbol();
+  var base=(f?.price?.perPerson||0)*n;
+  var rtBase=airaState.returnFlight?(airaState.returnFlight.price?.perPerson||0)*n:0;
+  var total=base+rtBase;
+  var html='<b>Booking Summary</b><br><br>'
+    +f?.origin?.code+' \u2192 '+f?.destination?.code+' \u00b7 '+f?.airline?.name+'<br>'
+    +sym+(f?.price?.perPerson||0).toLocaleString()+' \u00d7 '+n+' = <b>'+sym+base.toLocaleString()+'</b>';
+  if(rtBase>0)html+='<br>Return: <b>'+sym+rtBase.toLocaleString()+'</b>';
+  if(userCredits>0){
+    var maxRedeem=Math.round(total*0.20*100)/100;
+    html+='<br><span style="color:#5daa72">\u2756 Apply up to '+sym+maxRedeem.toFixed(2)+' credits?</span>';
+  }
+  html+='<br><br><b>Total: '+sym+total.toLocaleString()+'</b>';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Proceed to Payment',primary:true,action:function(){
+      airaOpenPayment();
+    }},
+    {label:'Apply credits',action:function(){
+      airaState.useCredits=true;
+      airaAddMsg('user','Apply my credits');
+      airaAddMsg('aira','Credits will be applied at checkout!');
+      airaOpenPayment();
+    }},
+    {label:'Cancel booking',action:function(){
+      airaResetState();
+      airaAddMsg('aira','Booking cancelled. Is there anything else I can help with?');
+    }}
+  ]);
+  airaSpeak('Here is your booking summary. Ready to pay?');
+}
+
+function airaOpenPayment(){
+  var f=airaState.flight;
+  curFlight=f;
+  window._roundTripReturn=airaState.returnFlight||null;
+  if(!flights.includes(curFlight))flights.push(curFlight);
+  applyCredits=airaState.useCredits;
+  document.getElementById('finfo').style.display='none';
+  document.getElementById('pay-view').style.display='block';
+  document.getElementById('flight-ov').classList.add('open');
+  payStep=1;selSeats=airaState.seats||[];selectedAddons=airaState.addons||{};
+  Promise.all([loadSavedPassengers(),fetchCredits()]).then(function(){
+    buildPaxForms();setStep(4);
+  });
+  toggleAira();
+  airaAddMsg('aira','Opening payment screen now! \uD83D\uDC4D');
+}
+
+// ── MY TRIPS ──────────────────────────────────────────────────
+async function airaLoadTrips(){
+  if(!authUser){
+    airaAddMsg('aira','You need to be signed in to view your trips.');
+    var msg=airaAddMsg('aira','');
+    airaAddButtons(msg,[{label:'Sign In',primary:true,action:function(){toggleAira();openAuth();}}]);
+    return;
+  }
+  airaState.flow='trips';
+  var typing=airaShowTyping();
+  try{
+    var res=await fetch(FLYYB_API+'/api/trips',{headers:{Authorization:'Bearer '+authToken}});
+    var trips=await res.json();
+    airaHideTyping();
+    airaState.trips=trips;
+    if(!trips.length){
+      airaAddMsg('aira',"You don't have any trips yet. Ready to book your first flight?");
+      airaShowSuggestions(['Search flights']);
+      return;
+    }
+    var html='You have <b>'+trips.length+' trip'+(trips.length>1?'s':'')+'</b>:<br><br>';
+    trips.slice(0,4).forEach(function(t,i){
+      var statusColor=t.status==='confirmed'?'#5daa72':t.status==='cancelled'?'#e8836a':'#4a7fa8';
+      html+='<div class="aira-flight-card" style="margin-bottom:8px">'
+        +'<div class="aira-flight-row">'
+        +'<div class="aira-flight-times">'+t.origin?.code+' \u2192 '+t.destination?.code+'</div>'
+        +'<span style="font-size:.65rem;color:'+statusColor+';background:rgba(255,255,255,.06);padding:2px 8px;border-radius:10px">'+t.status+'</span>'
+        +'</div>'
+        +'<div class="aira-flight-detail">'
+        +t.flight?.airline?.name+' \u00b7 '
+        +new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+        +' \u00b7 Ref: '+t.bookingRef
+        +'</div>'
+        +(t.status==='confirmed'
+          ?'<div class="aira-action-btns" style="margin-top:6px">'
+            +'<button class="aira-action-btn" onclick="airaRescheduleTrip(\''+t.bookingRef+'\',\''+t.date?.split('T')[0]+'\')">Reschedule</button>'
+            +'<button class="aira-action-btn" style="color:var(--rust)" onclick="airaCancelTrip(\''+t.bookingRef+'\')">Cancel</button>'
+            +'</div>':''
+        )
+        +'</div>';
+    });
+    if(trips.length>4)html+='<div style="font-size:.68rem;color:rgba(245,240,232,.4);margin-top:4px">+'+(trips.length-4)+' more trips</div>';
+    airaAddMsg('aira',html);
+    airaSpeak('Here are your trips.');
+    var msg2=airaAddMsg('aira','What would you like to do?');
+    airaAddButtons(msg2,[
+      {label:'View all trips',action:function(){toggleAira();openTrips();}},
+      {label:'Book new flight',primary:true,action:function(){airaAddMsg('user','Search flights');airaAddMsg('aira','Sure! Where would you like to fly?');airaState.flow=null;}}
+    ]);
+  }catch(e){
+    airaHideTyping();
+    airaAddMsg('aira','Could not load your trips right now. Please try again!');
+  }
+}
+
+async function airaCancelTrip(ref){
+  var msg=airaAddMsg('aira','Are you sure you want to cancel booking <b>'+ref+'</b>? A refund will be processed.');
+  airaAddButtons(msg,[
+    {label:'Yes, cancel it',action:async function(){
+      try{
+        var res=await fetch(FLYYB_API+'/api/trips?action=cancel',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({bookingRef:ref})});
+        var data=await res.json();
+        if(!res.ok){airaAddMsg('aira','Could not cancel: '+(data.error||'Please try again.'));return;}
+        airaAddMsg('aira','Booking <b>'+ref+'</b> cancelled. Refund will appear in 5-10 business days. A confirmation has been sent to your email.');
+        airaSpeak('Booking cancelled. Refund is on its way!');
+      }catch(e){airaAddMsg('aira','Could not cancel right now. Please try again.');}
+    }},
+    {label:'Keep booking',primary:true,action:function(){airaAddMsg('aira','No problem, your booking is safe!');}}
+  ]);
+}
+
+async function airaRescheduleTrip(ref,currentDate){
+  airaAddMsg('aira','I will open the reschedule calendar for booking <b>'+ref+'</b>.');
+  var msg=airaAddMsg('aira','');
+  airaAddButtons(msg,[
+    {label:'Open reschedule',primary:true,action:function(){
+      toggleAira();
+      rescheduleTrip(ref,currentDate);
+    }},
+    {label:'Cancel',action:function(){airaAddMsg('aira','No problem!');}}
+  ]);
+}
+
+// ── CREDITS ──────────────────────────────────────────────────
+async function airaShowCredits(){
+  if(!authUser){
+    airaAddMsg('aira','Sign in to check your credits balance!');
+    return;
+  }
+  var typing=airaShowTyping();
+  try{
+    var res=await fetch(FLYYB_API+'/api/booking?action=credits',{headers:{Authorization:'Bearer '+authToken}});
+    var data=await res.json();
+    airaHideTyping();
+    var sym=getSymbol();
+    var html='<b>\u2756 Your FLYYB Credits</b><br><br>'
+      +'Balance: <span style="color:var(--gold);font-size:1.1rem;font-weight:600">'+sym+data.balance.toFixed(2)+'</span><br><br>'
+      +'<span style="font-size:.75rem;color:rgba(245,240,232,.5)">Earn 5% on every booking \u00b7 Use up to 20% per booking</span>';
+    if(data.transactions&&data.transactions.length){
+      html+='<br><br><b>Recent activity:</b><br>';
+      data.transactions.slice(0,3).forEach(function(t){
+        var col=t.amount>0?'#5daa72':'#e8836a';
+        html+='<div style="display:flex;justify-content:space-between;font-size:.75rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+          +'<span style="color:rgba(245,240,232,.6)">'+t.description+'</span>'
+          +'<span style="color:'+col+';">'+(t.amount>0?'+':'')+sym+Math.abs(t.amount).toFixed(2)+'</span>'
+          +'</div>';
+      });
+    }
+    var msg=airaAddMsg('aira',html);
+    airaAddButtons(msg,[
+      {label:'View full history',action:function(){toggleAira();openCreditsModal();}},
+      {label:'Use credits on next booking',primary:true,action:function(){airaAddMsg('aira','Your credits will be applied automatically when you book next. Just tap "Apply" at checkout!');}}
+    ]);
+    airaSpeak('You have '+sym+data.balance.toFixed(2)+' credits available!');
+  }catch(e){
+    airaHideTyping();
+    airaAddMsg('aira','Could not load credits right now. Please try again!');
+  }
+}
+
+// ── VOICE INPUT ───────────────────────────────────────────────
 function toggleMic(){
   if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
     airaAddMsg('aira','Voice input is not supported in this browser. Try Chrome!');return;
@@ -2576,14 +2934,16 @@ function toggleMic(){
     document.getElementById('aira-mic').classList.remove('listening');
     airaUserSend();
   };
-  airaRecog.onerror=function(){airaListening=false;document.getElementById('aira-mic').classList.remove('listening');};
-  airaRecog.onend=function(){airaListening=false;document.getElementById('aira-mic').classList.remove('listening');};
+  airaRecog.onerror=airaRecog.onend=function(){
+    airaListening=false;
+    document.getElementById('aira-mic').classList.remove('listening');
+  };
   airaRecog.start();
   airaListening=true;
   document.getElementById('aira-mic').classList.add('listening');
 }
 
-// ── Send user message ─────────────────────────────────────────
+// ── INPUT HANDLING ────────────────────────────────────────────
 function airaSuggest(el){
   document.getElementById('aira-input').value=el.textContent;
   airaUserSend();
@@ -2594,6 +2954,20 @@ function airaUserSend(){
   var msg=inp.value.trim();
   if(!msg||airaThinking)return;
   inp.value='';
+  // Check for local intent first (faster, no API call)
+  var t=msg.toLowerCase();
+  if(t.includes('my trip')||t.includes('my booking')||t.includes('my flight')){
+    airaAddMsg('user',msg);
+    airaHistory.push({role:'user',content:msg});
+    airaLoadTrips();
+    return;
+  }
+  if(t.includes('credit')||t.includes('reward')||t.includes('points')){
+    airaAddMsg('user',msg);
+    airaHistory.push({role:'user',content:msg});
+    airaShowCredits();
+    return;
+  }
   airaAddMsg('user',msg);
   airaSend(msg);
 }
@@ -2603,40 +2977,22 @@ async function airaSend(msg){
   airaThinking=true;
   airaHistory.push({role:'user',content:msg});
   var typing=airaShowTyping();
-
   try{
-    // Build context about current user
     var context='';
     if(authUser){
-      context='User: '+authUser.name+', Currency: '+(authUser.currency||'USD')+', Credits: $'+userCredits.toFixed(2)+'.';
-      if(FA&&TA)context+=' Currently viewing: '+FA.city+' to '+TA.city+'.';
+      context='User: '+authUser.name+', Currency: '+(authUser.currency||'USD')+', Credits: '+getSymbol()+userCredits.toFixed(2)+'.';
     }
-
     var res=await fetch(FLYYB_API+'/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        message:msg,
-        history:airaHistory.slice(-12),
-        context:context,
-        userLoggedIn:!!authUser,
-        userName:authUser?authUser.name.split(' ')[0]:null
-      })
+      body:JSON.stringify({message:msg,history:airaHistory.slice(-12),context:context,userLoggedIn:!!authUser})
     });
     var data=await res.json();
     airaHideTyping();
-
-    // Handle function calls / special actions from backend
-    if(data.action==='show_flights'&&data.flights){
+    if(data.action==='show_flights'&&data.flights&&data.flights.length){
       airaFlightResults=data.flights;
-      airaShowFlights(data.flights,data.from||'',data.to||'');
-    } else if(data.action==='open_search'){
-      airaAddMsg('aira',data.reply||'Let me open the search for you!');
-      setTimeout(function(){
-        if(data.from)document.getElementById('fi').value=data.from;
-        if(data.to)document.getElementById('ti').value=data.to;
-      },500);
-    } else {
+      airaShowFlights(data.flights,data.from||'',data.to||'',data.date||'');
+    }else{
       var reply=data.reply||"I'm not sure about that. Could you rephrase?";
       airaAddMsg('aira',reply);
       airaSpeak(reply);
@@ -2648,6 +3004,7 @@ async function airaSend(msg){
   }
   airaThinking=false;
 }
+
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(document.getElementById('confirm-ov').classList.contains('open')){closeConfirm();return;}
