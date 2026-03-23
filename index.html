@@ -408,13 +408,13 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 .aira-btn-avatar{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
 .aira-pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(212,168,67,.4);animation:airaPulse 2s ease-in-out infinite}
 @keyframes airaPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
-.aira-window{position:fixed;bottom:100px;right:20px;z-index:500;width:380px;height:620px;background:linear-gradient(160deg,#060612 0%,#0d1a2e 50%,#0f1922 100%);border:1px solid rgba(212,168,67,.3);border-radius:20px;display:none;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.8);overflow:hidden}
+.aira-window{position:fixed;inset:0;z-index:600;background:linear-gradient(160deg,#060612 0%,#0d1a2e 50%,#0f1922 100%);display:none;flex-direction:column;overflow:hidden}
 .aira-window.open{display:flex;animation:airaSlideUp .3s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes airaSlideUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes airaSlideUp{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
 .aira-header{padding:16px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2);flex-shrink:0}
 .aira-avatar-wrap{position:relative;flex-shrink:0}
-.aira-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#d4a843,#b8892e);display:flex;align-items:center;justify-content:center;font-size:1.4rem;position:relative;overflow:hidden}
-.aira-avatar svg{position:absolute;inset:0;width:100%;height:100%}
+.aira-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#d4a843,#b8892e);display:flex;align-items:center;justify-content:center;font-size:1.4rem;position:relative;overflow:visible}
+.aira-avatar svg{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;overflow:hidden}
 .aira-face{transition:all .15s ease}
 .aira-avatar-ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(212,168,67,.5);animation:airaRing 3s linear infinite}
 @keyframes airaRing{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
@@ -444,7 +444,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 .aira-voice-bar .vb:nth-child(10){height:14px;animation-delay:.3s}
 @keyframes airaBar{0%,100%{transform:scaleY(.3);opacity:.5}50%{transform:scaleY(1);opacity:1}}
 .aira-voice-label{font-size:.65rem;color:rgba(245,240,232,.4);letter-spacing:.1em;text-align:center;padding:4px 0;flex-shrink:0}
-.aira-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.aira-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;max-width:680px;width:100%;margin:0 auto;box-sizing:border-box}
 .aira-messages::-webkit-scrollbar{width:3px}
 .aira-messages::-webkit-scrollbar-thumb{background:rgba(212,168,67,.2);border-radius:2px}
 .aira-msg{display:flex;gap:8px;align-items:flex-end;max-width:100%}
@@ -472,7 +472,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 .aira-action-btn:hover{background:rgba(212,168,67,.25);border-color:var(--gold)}
 .aira-action-btn.primary{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
 .aira-action-btn.primary:hover{background:#e5ba5a}
-.aira-input-row{padding:12px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.15);flex-shrink:0}
+.aira-input-row{padding:12px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.15);flex-shrink:0;max-width:680px;width:100%;margin:0 auto;box-sizing:border-box}
+.aira-input-wrap{border-top:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.15);flex-shrink:0;padding:0 0 env(safe-area-inset-bottom)}
 .aira-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:24px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.82rem;padding:10px 16px;outline:none;transition:border-color .2s}
 .aira-input:focus{border-color:rgba(212,168,67,.5);background:rgba(255,255,255,.08)}
 .aira-input::placeholder{color:rgba(245,240,232,.25)}
@@ -482,7 +483,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 @keyframes airaMicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .aira-send-btn{width:36px;height:36px;border-radius:50%;background:var(--gold);border:none;color:var(--ink);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
 .aira-send-btn:hover{background:#e5ba5a;transform:scale(1.05)}
-.aira-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0}
+.aira-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0;max-width:680px;width:100%;margin:0 auto;box-sizing:border-box}
 .aira-sug{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:rgba(245,240,232,.5);font-size:.68rem;padding:5px 12px;cursor:pointer;transition:all .2s;white-space:nowrap}
 .aira-sug:hover{border-color:rgba(212,168,67,.3);color:var(--paper)}
 
@@ -838,7 +839,20 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
         <div class="booking-summary" id="bsum"></div>
         <div id="credits-apply-section"></div>
         <div style="font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:8px">Card Details</div>
-        <div id="stripe-card-element"></div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:6px">Card Number</div>
+          <div id="stripe-card-number" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:14px 16px;transition:border-color .2s"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:6px">Expiry Date</div>
+            <div id="stripe-card-expiry" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:14px 16px;transition:border-color .2s"></div>
+          </div>
+          <div>
+            <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:6px">CVV <span style="color:rgba(245,240,232,.3);font-size:.55rem">(masked)</span></div>
+            <div id="stripe-card-cvc" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:14px 16px;transition:border-color .2s"></div>
+          </div>
+        </div>
         <div id="stripe-card-errors"></div>
         <div class="secure">🔒 256-bit SSL &middot; PCI DSS compliant &middot; Powered by Stripe</div>
         <div class="processing" id="proc"><div class="spinner"></div><div class="proc-lbl">Processing payment...</div></div>
@@ -932,12 +946,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
 </button>
 
 <div class="aira-window" id="aira-window">
-  <div class="aira-header">
+  <div class="aira-header" style="padding:16px 24px 12px;background:rgba(0,0,0,.3)">
     <div class="aira-avatar-wrap">
       <div class="aira-avatar" id="aira-avatar">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Face base -->
-          <circle cx="22" cy="22" r="22" fill="url(#ag)"/>
+          <circle cx="22" cy="22" r="22" fill="url(#aira-grad)"/>
           <!-- Hair -->
           <ellipse cx="22" cy="13" rx="10" ry="8" fill="#1a0a00"/>
           <rect x="12" y="13" width="20" height="6" fill="#1a0a00"/>
@@ -954,7 +968,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
           <!-- Uniform collar -->
           <path d="M13 38 Q17 31 22 30 Q27 31 31 38" fill="#d4a843"/>
           <defs>
-            <radialGradient id="ag" cx="50%" cy="40%" r="60%">
+            <radialGradient id="aira-grad" cx="50%" cy="40%" r="60%">
               <stop offset="0%" stop-color="#d4a843"/>
               <stop offset="100%" stop-color="#b8892e"/>
             </radialGradient>
@@ -968,7 +982,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
       <div class="aira-name">AIRA</div>
       <div class="aira-tagline" id="aira-tagline">AI Reservations Assistant</div>
     </div>
-    <button class="aira-close" onclick="toggleAira()">&#x2715;</button>
+    <button class="aira-close" onclick="airaConfirmClose()" title="Back to FLYYB" style="width:auto;padding:6px 14px;border-radius:4px;font-size:.75rem;letter-spacing:.05em">&#x2715; EXIT</button>
   </div>
   <div class="aira-voice-bar" id="aira-voice-bar">
     <div class="vb"></div><div class="vb"></div><div class="vb"></div>
@@ -983,10 +997,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
     <span class="aira-sug" onclick="airaSuggest(this)">Baggage rules</span>
   </div>
   <div class="aira-messages" id="aira-messages"></div>
-  <div class="aira-input-row">
-    <button class="aira-mic-btn" id="aira-mic" onclick="toggleMic()" title="Speak">&#x1F3A4;</button>
-    <input class="aira-input" id="aira-input" placeholder="Ask AIRA anything..." onkeydown="if(event.key==='Enter')airaUserSend()">
-    <button class="aira-send-btn" onclick="airaUserSend()">&#x27A4;</button>
+  <div class="aira-input-wrap">
+    <div class="aira-input-row">
+      <button class="aira-mic-btn" id="aira-mic" onclick="toggleMic()" title="Speak">&#x1F3A4;</button>
+      <input class="aira-input" id="aira-input" placeholder="Ask AIRA anything..." onkeydown="if(event.key==='Enter')airaUserSend()">
+      <button class="aira-send-btn" onclick="airaUserSend()">&#x27A4;</button>
+    </div>
   </div>
 </div>
 
@@ -1318,7 +1334,7 @@ async function doReg(){
     if(!namep){err('rerr','Enter your full name');return;}
     if(!phone){err('rerr','Enter your mobile number');return;}
     if(!currency){err('rerr','Please select a default currency');return;}
-    const termsPhEl=document.getElementById('r-terms-phone');if(termsPhEl&&!termsPhEl.checked){err('rerr','Please accept the Terms & Conditions to continue');return;}
+    const termsPhEl=document.getElementById('r-terms-phone');if(!termsPhEl||!termsPhEl.checked){err('rerr','Please accept the Terms & Conditions to continue');return;}
     setAuthBtnLoading('r-btn',true,'SEND OTP');
     try{
       const res=await securePost(`${FLYYB_API}/api/auth?action=register`,{name:namep,phone,dial,currency,provider:'phone'});
@@ -1523,6 +1539,27 @@ function loginOK(user, token, credits=0){
   renderNavUser();
   updateDealsBtn();
   resetSessionTimers();
+  // Restore AIRA state after login if user came from AIRA booking flow
+  if(window._airaPendingFlight){
+    setTimeout(function(){
+      airaState.flight=window._airaPendingFlight;
+      airaState.step='confirm_flight';
+      if(window._airaPendingHistory)airaHistory=[...window._airaPendingHistory];
+      window._airaPendingFlight=null;
+      window._airaPendingHistory=null;
+      toggleAira();
+      var f=airaState.flight;
+      var sym=authUser?.currencySymbol||'$';
+      var html="Welcome back, "+authUser.name.split(' ')[0]+"! You were booking <b>"+f.airline?.name+"</b> "+f.origin?.code+" → "+f.destination?.code+".<br><br>Shall I continue with this flight?";
+      airaAddMsg('aira',html);
+      var msg2=airaAddMsg('aira','');
+      airaAddButtons(msg2,[
+        {label:'Yes, continue booking',primary:true,action:function(){airaStartBooking();}},
+        {label:'Search different flight',action:function(){airaAddMsg('aira','Sure! Where would you like to fly?');airaResetState();}}
+      ]);
+      airaSpeak("Welcome back! Shall I continue with your booking?",'happy');
+    },600);
+  }
 }
 
 // -- USER DROPDOWN ---------------------------------------------
@@ -1922,7 +1959,7 @@ function resetBookingFlow() {
   applyCredits = false;
   payStep = 1;
   curFlight = null;
-  if (stripe && cardElement) { try { cardElement.unmount(); } catch(e) {} cardElement = null; stripe = null; }
+  if (stripe && cardElement) { try { cardElement.unmount(); ['stripe-card-number','stripe-card-expiry','stripe-card-cvc'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='';}); } catch(e) {} cardElement = null; stripe = null; }
 }
 function resetFullApp() { location.reload(); }
 function closeFlight() {
@@ -2259,16 +2296,28 @@ async function initStripe(amount){
   const key=window.STRIPE_PUBLIC_KEY||await getStripeKey()||'pk_test_your_stripe_publishable_key';
   if(!stripe)stripe=Stripe(key);
   const elements=stripe.elements();
-  cardElement=elements.create('card',{
-    style:{
-      base:{color:'#f5f0e8',fontFamily:'DM Sans, sans-serif',fontSize:'15px','::placeholder':{color:'rgba(245,240,232,0.3)'}},
-      invalid:{color:'#e8836a'},
-    }
-  });
-  const el=document.getElementById('stripe-card-element');
-  if(el){el.innerHTML='';cardElement.mount('#stripe-card-element');}
-  cardElement.on('change',e=>{
+  var style={base:{color:'#f5f0e8',fontFamily:'DM Sans, sans-serif',fontSize:'15px','::placeholder':{color:'rgba(245,240,232,0.3)'}},invalid:{color:'#e8836a'}};
+  var cardNumber=elements.create('cardNumber',{style,showIcon:true});
+  var cardExpiry=elements.create('cardExpiry',{style});
+  var cardCvc=elements.create('cardCvc',{style,placeholder:'***'});
+  var nEl=document.getElementById('stripe-card-number');
+  var eEl=document.getElementById('stripe-card-expiry');
+  var cEl=document.getElementById('stripe-card-cvc');
+  if(nEl){nEl.innerHTML='';cardNumber.mount('#stripe-card-number');}
+  if(eEl){eEl.innerHTML='';cardExpiry.mount('#stripe-card-expiry');}
+  if(cEl){cEl.innerHTML='';cardCvc.mount('#stripe-card-cvc');}
+  cardElement=cardNumber; // use cardNumber as main element for payment confirmation
+  [cardNumber,cardExpiry,cardCvc].forEach(el=>el.on('change',e=>{
     document.getElementById('stripe-card-errors').textContent=e.error?e.error.message:'';
+    if(e.error){
+      el._el=document.getElementById('stripe-card-number');
+    }
+  }));
+  // Focus border highlight
+  [['stripe-card-number',cardNumber],['stripe-card-expiry',cardExpiry],['stripe-card-cvc',cardCvc]].forEach(function(pair){
+    var id=pair[0],el=pair[1];
+    el.on('focus',function(){var d=document.getElementById(id);if(d)d.style.borderColor='rgba(212,168,67,.6)';});
+    el.on('blur',function(){var d=document.getElementById(id);if(d)d.style.borderColor='rgba(255,255,255,.1)';});
   });
 }
 
@@ -2907,6 +2956,17 @@ function airaSetEmotion(emotion){
 }
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────
+function airaConfirmClose(){
+  showConfirm(
+    'Leave AIRA?',
+    'This will close the AIRA chat and return you to the home screen. Your conversation will be saved.',
+    function(){
+      airaOpen=false;
+      document.getElementById('aira-window').classList.remove('open');
+    }
+  );
+}
+
 function toggleAira(){
   airaOpen=!airaOpen;
   var win=document.getElementById('aira-window');
@@ -3073,8 +3133,12 @@ function airaStartBooking(){
   if(!authUser){
     var msg=airaAddMsg('aira',"You need to be signed in to book. Shall I open the sign in screen?");
     airaAddButtons(msg,[
-      {label:'Sign In',primary:true,action:function(){toggleAira();openAuth();}},
-      {label:'Maybe later',action:function(){airaAddMsg('aira','No problem! Let me know when you are ready.');}}
+      {label:'Sign In',primary:true,action:function(){
+        window._airaPendingFlight=airaState.flight;
+        window._airaPendingHistory=[...airaHistory];
+        toggleAira();openAuth();
+      }},
+      {label:'Maybe later',action:function(){airaAddMsg('aira',"No problem! Let me know when you are ready.");}}
     ]);
     return;
   }
@@ -3450,20 +3514,58 @@ function airaUserSend(){
   var msg=inp.value.trim();
   if(!msg||airaThinking)return;
   inp.value='';
-  // Check for local intent first (faster, no API call)
   var t=msg.toLowerCase();
-  if(t.includes('my trip')||t.includes('my booking')||t.includes('my flight')){
-    airaAddMsg('user',msg);
-    airaHistory.push({role:'user',content:msg});
-    airaLoadTrips();
-    return;
+
+  // ── Local intent interception (no API call needed) ───────────
+  // Trips
+  if(t.includes('my trip')||t.includes('my booking')||t.includes('my flight')||t==='trips'){
+    airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+    airaLoadTrips();return;
   }
-  if(t.includes('credit')||t.includes('reward')||t.includes('points')){
-    airaAddMsg('user',msg);
-    airaHistory.push({role:'user',content:msg});
-    airaShowCredits();
-    return;
+  // Credits
+  if(t.includes('credit')||t.includes('reward')||t.includes('points')||t==='balance'){
+    airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+    airaShowCredits();return;
   }
+  // Booking confirmation commands (yes/confirm/ok/proceed/book now/let's go)
+  var confirmWords=['yes','confirm','ok','proceed','book now','book it','go ahead',"let's go",'sure','continue','yes please'];
+  if(confirmWords.some(w=>t===w||t===w+'!'||t===w+'.')){
+    if(airaState.flight&&(airaState.step==='confirm_flight'||airaState.step==='select_flight')){
+      airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+      airaStartBooking();return;
+    }
+    if(airaState.step==='pax_count'||airaState.step==='pax_details'){
+      airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+      airaSetPax(airaState.paxCount||1);return;
+    }
+    if(airaState.step==='payment'||airaState.step==='summary'){
+      airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+      airaOpenPayment();return;
+    }
+  }
+  // Cancel/no commands
+  var cancelWords=['no','cancel','stop','nevermind','never mind','go back'];
+  if(cancelWords.some(w=>t===w)){
+    if(airaState.flow==='booking'){
+      airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+      airaResetState();
+      airaAddMsg('aira',"No problem! Is there anything else I can help you with?");
+      airaShowSuggestions(['Search flights','My trips','My credits','Baggage rules']);
+      return;
+    }
+  }
+  // Passenger count shortcuts
+  if(airaState.step==='pax_count'){
+    var numMatch=t.match(/^(\d+)$|^(\d+)\s+(?:adult|passenger|pax|person|people)/);
+    if(numMatch){
+      var n=parseInt(numMatch[1]||numMatch[2]);
+      if(n>=1&&n<=9){
+        airaAddMsg('user',msg);airaHistory.push({role:'user',content:msg});
+        airaSetPax(n);return;
+      }
+    }
+  }
+
   airaAddMsg('user',msg);
   airaSend(msg);
 }
