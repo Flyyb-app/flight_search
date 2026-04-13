@@ -169,8 +169,8 @@ function renderUserPill(user) {
 const pill = $('user-pill');
 if (!pill) return;
 if (user) {
-const initials = '${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}'.toUpperCase();
-pill.innerHTML = ' <div class="user-avatar" data-testid="user-avatar">${initials}</div> <span class="user-name"  data-testid="user-name">${user.firstName}</span>';
+const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase();
+pill.innerHTML = ` <div class="user-avatar" data-testid="user-avatar">${initials}</div> <span class="user-name"  data-testid="user-name">${user.firstName}</span>`;
 pill.dataset.loggedIn = 'true';
 } else {
 pill.innerHTML = '<span class="user-name">Sign In</span>';

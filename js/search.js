@@ -47,14 +47,14 @@ try {
 
 if (!airports.length) { dropdown.classList.remove('open'); return; }
 
-dropdown.innerHTML = airports.map(ap => '
+dropdown.innerHTML = airports.map(ap => `
   <div class="ap-item" data-code="${ap.iata}" data-testid="ap-item">
     <div class="ap-item-left">
       <span class="ap-item-name">${ap.name}</span>
       <span class="ap-item-city">${ap.city}, ${ap.country}</span>
     </div>
     <span class="ap-item-code">${ap.iata}</span>
-  </div>').join('');
+  </div>`).join('');
 
 dropdown.querySelectorAll('.ap-item').forEach(item => {
   item.addEventListener('click', () => {

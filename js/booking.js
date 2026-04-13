@@ -78,7 +78,7 @@ if (bad.length) { showBookingError('Please fill in all required fields.'); retur
 if (step === 2) {
 const needed = parseInt($('adults')?.value ?? 1, 10);
 if (selectedSeats.length < needed) {
-showBookingError('Please select ${needed} seat${needed > 1 ? 's' : ''}.');
+showBookingError(`Please select ${needed} seat${needed > 1 ? 's' : ''}.`);
 return false;
 }
 }

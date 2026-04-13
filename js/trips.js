@@ -60,7 +60,7 @@ btn.classList.toggle('active', btn.dataset.filter === filter)
 const list = filter === 'all' ? allTrips : allTrips.filter(t => t.status === filter);
 
 if (!list.length) {
-c.innerHTML = '<div class="empty-hero" data-testid="no-trips"> <p>No ${filter === 'all' ? '' : filter + ' '}trips found.</p></div>';
+c.innerHTML = `<div class="empty-hero" data-testid="no-trips"> <p>No ${filter === 'all' ? '' : filter + ' '}trips found.</p></div>`;
 return;
 }
 
