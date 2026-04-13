@@ -156,7 +156,7 @@ el.classList.add('selected');
 selectedSeats.push(id);
 }
 const info = $('seat-info');
-if (info) info.textContent = selectedSeats.length ? 'Selected: ${selectedSeats.join(', ')}' : 'Click a seat to select';
+if (info) info.textContent = selectedSeats.length ? `Selected: ${selectedSeats.join(', ')}` : 'Click a seat to select';
 FLYYB.log('Seats:', selectedSeats);
 }
 

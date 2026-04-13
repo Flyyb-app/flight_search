@@ -118,7 +118,7 @@ dest:   selectedDest.iata,
 date:   $('dep-date').value,
 adults: $('adults')?.value  ?? 1,
 cabin:  $('cabin')?.value   ?? 'economy',
-($('ret-date')?.value ? { retDate: $('ret-date').value } : {}),
+…($('ret-date')?.value ? { retDate: $('ret-date').value } : {}),
 });
 
 try {

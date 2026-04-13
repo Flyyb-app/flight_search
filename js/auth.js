@@ -215,7 +215,7 @@ FLYYB.clearToken();
 
 // ── OTP digit auto-advance ────────────────────────────────────────────────────
 function initOtpInputs() {
-const inputs = [document.querySelectorAll('.otp-i')];
+const inputs = […document.querySelectorAll('.otp-i')];
 inputs.forEach((inp, i) => {
 inp.addEventListener('input', () => {
 if (inp.value.length === 1 && i < inputs.length - 1) inputs[i + 1].focus();

@@ -69,7 +69,7 @@ const dateStr = new Date(t.departureDate).toLocaleDateString('en-US',
 { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
 
-return '
+return `
   <div class="trip-card" data-testid="trip-card">
     <div class="trip-card-header">
       <div>
@@ -83,12 +83,12 @@ return '
     </div>
     <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
       <span style="font-family:'DM Mono',monospace;color:var(--gold)">$${t.totalPaid}</span>
-      ${t.status === 'confirmed' ? '
+      ${t.status === 'confirmed' ? `
         <button type="button" class="p-back"
           style="flex:0;padding:7px 16px;font-size:.72rem"
-          data-action="cancel-trip" data-trip-id="${t.id}">Cancel</button>' : ''}
+          data-action="cancel-trip" data-trip-id="${t.id}">Cancel</button>` : ''}
     </div>
-  </div>';
+  </div>`;
 
 
 }).join('');
