@@ -1,0 +1,159 @@
+/* ============================================================
+   FLYYB — base.css
+   Reset · CSS variables · Root typography
+   ============================================================ */
+
+/* ── Reset ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ───────────────────────────────────────── */
+:root {
+  /* Colours */
+  --ink:        #0a0a0f;
+  --paper:      #f5f0e8;
+  --gold:       #d4a843;
+  --gold-dim:   rgba(212, 168, 67, 0.15);
+  --horizon:    #4a7fa8;
+  --rust:       #b5451b;
+  --green:      #5daa72;
+
+  /* Glass surface */
+  --glass:      rgba(255, 255, 255, 0.04);
+  --glass-b:    rgba(255, 255, 255, 0.08);
+
+  /* Typography scale */
+  --text-xs:    0.6rem;
+  --text-sm:    0.75rem;
+  --text-base:  0.95rem;
+  --text-lg:    1.1rem;
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-2xl:  48px;
+
+  /* Radius */
+  --radius-sm:  2px;
+  --radius-md:  4px;
+  --radius-lg:  8px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition: 0.2s ease;
+}
+
+/* ── Base elements ───────────────────────────────────────── */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background:   var(--ink);
+  color:        var(--paper);
+  font-family:  'DM Sans', sans-serif;
+  font-weight:  400;
+  line-height:  1.5;
+  min-height:   100vh;
+  overflow-x:   hidden;
+  cursor:       default;
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family:    'Bebas Neue', sans-serif;
+  letter-spacing: 0.06em;
+  line-height:    1;
+}
+
+a {
+  color:           var(--gold);
+  text-decoration: none;
+  transition:      color var(--transition);
+}
+
+a:hover {
+  color: var(--paper);
+}
+
+/* ── Utility classes ─────────────────────────────────────── */
+.sr-only {
+  border:   0;
+  clip:     rect(0 0 0 0);
+  height:   1px;
+  margin:   -1px;
+  overflow: hidden;
+  padding:  0;
+  position: absolute;
+  width:    1px;
+}
+
+.text-gold  { color: var(--gold); }
+.text-rust  { color: var(--rust); }
+.text-green { color: var(--green); }
+.text-muted { color: rgba(245, 240, 232, 0.4); }
+
+.font-mono { font-family: 'DM Mono', monospace; }
+.font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.1em; }
+
+/* ── Focus styles (accessibility) ───────────────────────── */
+:focus-visible {
+  outline:        2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(212, 168, 67, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 67, 0.5); }
+
+/* ── Message boxes ───────────────────────────────────────── */
+.msg-err {
+  background:    rgba(181, 69, 27, 0.15);
+  border:        1px solid rgba(181, 69, 27, 0.3);
+  border-radius: var(--radius-sm);
+  color:         #e8836a;
+  display:       none;
+  font-size:     var(--text-sm);
+  margin-bottom: var(--space-md);
+  padding:       10px 14px;
+}
+
+.msg-err.on { display: block; }
+
+.msg-ok {
+  background:    rgba(93, 170, 114, 0.12);
+  border:        1px solid rgba(93, 170, 114, 0.3);
+  border-radius: var(--radius-sm);
+  color:         #7fd498;
+  display:       none;
+  font-size:     var(--text-sm);
+  margin-bottom: var(--space-md);
+  padding:       10px 14px;
+}
+
+.msg-ok.on { display: block; }
+
+/* ── Print ───────────────────────────────────────────────── */
+@media print {
+  body * { visibility: hidden !important; }
+  #flyyb-print-area,
+  #flyyb-print-area * { visibility: visible !important; }
+  #flyyb-print-area {
+    background: white;
+    inset:      0;
+    padding:    40px;
+    position:   fixed;
+    z-index:    99999;
+  }
+}
