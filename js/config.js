@@ -25,9 +25,9 @@ DEBUG: window.location.hostname === 'localhost' ||
 window.location.hostname === '127.0.0.1',
 
 // ── Logger ──────────────────────────────────────────────────────────────
-log  (…a) { if (this.DEBUG) console.log ('%c[FLYYB]', 'color:#d4a843;font-weight:bold', …a); },
-warn (…a) { if (this.DEBUG) console.warn('%c[FLYYB]', 'color:#e5ba5a;font-weight:bold', …a); },
-error(…a) {                 console.error('%c[FLYYB]', 'color:#e8836a;font-weight:bold', …a); },
+log  (a) { if (this.DEBUG) console.log ('%c[FLYYB]', 'color:#d4a843;font-weight:bold', a); },
+warn (a) { if (this.DEBUG) console.warn('%c[FLYYB]', 'color:#e5ba5a;font-weight:bold', a); },
+error(a) {                 console.error('%c[FLYYB]', 'color:#e8836a;font-weight:bold', a); },
 
 // ── Auth token helpers ──────────────────────────────────────────────────
 getToken ()      { return localStorage.getItem('flyyb_token'); },
@@ -52,12 +52,8 @@ clearToken ()    { localStorage.removeItem('flyyb_token'); },
 - @example
 - const data = await FLYYB.apiFetch('/api/search?origin=JFK&dest=LAX');
 - const data = await FLYYB.apiFetch('/api/auth', {
-- '''
-  method: 'POST',
-  '''
-- '''
-  body: JSON.stringify({ action: 'login', email, password }),
-  '''
+- method: 'POST',
+- body: JSON.stringify({ action: 'login', email, password }),
 - });
   */
   async apiFetch(path, options = {}) {
@@ -65,7 +61,6 @@ clearToken ()    { localStorage.removeItem('flyyb_token'); },
   const method = options.method || 'GET';
   const token  = this.getToken();
 
-'''
 this.log('→ ${method} ${path}');
 
 const headers = {
@@ -91,7 +86,6 @@ if (!res.ok) {
 
 this.log('← ${res.status} ${path}', data);
 return data;
-'''
 
 },
 };

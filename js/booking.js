@@ -3,9 +3,7 @@
 - FLYYB — js/booking.js  (flight_search repo)
 - 
 - Handles: multi-step booking modal — passenger forms,
-- '''
-       seat map, add-ons selection.
-  '''
+- seat map, add-ons selection.
 - 
 - Depends on: js/config.js (FLYYB), js/auth.js (window.Auth)
 - Exposes:    window.Booking  (consumed by search.js and payment.js)
@@ -72,7 +70,7 @@ function prevStep() { if (bookingStep > 1) goToStep(bookingStep - 1); }
 function validateStep(step) {
 clearBookingError();
 if (step === 1) {
-const bad = […document.querySelectorAll('.psec[data-step="1"] [required]')]
+const bad = [document.querySelectorAll('.psec[data-step="1"] [required]')]
 .filter(el => !el.value.trim());
 bad.forEach(el => { el.style.borderColor = 'var(–rust)'; });
 if (bad.length) { showBookingError('Please fill in all required fields.'); return false; }
@@ -179,7 +177,7 @@ function renderAddons() {
 const container = $('addons-container');
 if (!container) return;
 
-const cats = […new Set(ADDONS.map(a => a.cat))];
+const cats = [new Set(ADDONS.map(a => a.cat))];
 container.innerHTML = cats.map(cat => '<div class="addon-category"> <div class="addon-category-title">${cat}</div> ${ADDONS.filter(a => a.cat === cat).map(a =>'
 <div class="addon-item" data-id="${a.id}" data-testid="addon-${a.id}">
 <div class="addon-icon">${a.icon}</div>

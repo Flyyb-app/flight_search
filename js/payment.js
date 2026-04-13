@@ -95,9 +95,9 @@ const total       = base + addonsTotal + taxes - discount;
 
 const rows = [
 { label: '${flight.airline} · ${flight.origin}→${flight.dest}', val: '$${base}' },
-…addons.map(a => ({ label: a.name, val: '+$${a.price}' })),
+addons.map(a => ({ label: a.name, val: '+$${a.price}' })),
 { label: 'Taxes & fees (12%)', val: '$${taxes}' },
-…(discount > 0 ? [{ label: 'FLYYB Credits', val: '-$${discount}' }] : []),
+(discount > 0 ? [{ label: 'FLYYB Credits', val: '-$${discount}' }] : []),
 ];
 
 const el = $('booking-summary');

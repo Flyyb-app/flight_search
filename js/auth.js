@@ -130,7 +130,7 @@ showMsg(err, ex.message);
 async function handleVerifyOtp() {
 const err   = $('otp-error');
 const phone = $('otp-phone')?.value.trim();
-const code  = […document.querySelectorAll('.otp-i')].map(i => i.value).join('');
+const code  = [document.querySelectorAll('.otp-i')].map(i => i.value).join('');
 clearMsg(err);
 if (code.length < 6) return showMsg(err, 'Please enter the full 6-digit code.');
 
@@ -215,7 +215,7 @@ FLYYB.clearToken();
 
 // ── OTP digit auto-advance ────────────────────────────────────────────────────
 function initOtpInputs() {
-const inputs = […document.querySelectorAll('.otp-i')];
+const inputs = [document.querySelectorAll('.otp-i')];
 inputs.forEach((inp, i) => {
 inp.addEventListener('input', () => {
 if (inp.value.length === 1 && i < inputs.length - 1) inputs[i + 1].focus();

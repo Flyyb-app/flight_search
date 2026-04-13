@@ -14,7 +14,7 @@
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function debounce(fn, ms = 300) {
 let t;
-return (…args) => { clearTimeout(t); t = setTimeout(() => fn(…args), ms); };
+return (args) => { clearTimeout(t); t = setTimeout(() => fn(args), ms); };
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ dest:   selectedDest.iata,
 date:   $('dep-date').value,
 adults: $('adults')?.value  ?? 1,
 cabin:  $('cabin')?.value   ?? 'economy',
-…($('ret-date')?.value ? { retDate: $('ret-date').value } : {}),
+($('ret-date')?.value ? { retDate: $('ret-date').value } : {}),
 });
 
 try {

@@ -34,7 +34,7 @@ $('trips-modal')?.classList.remove('open');
 async function loadTrips() {
 const c = $('trips-container');
 if (!c) return;
-c.innerHTML = '<div style="padding:20px;color:rgba(245,240,232,.4)">Loading trips…</div>';
+c.innerHTML = '<div style="padding:20px;color:rgba(245,240,232,.4)">Loading trips</div>';
 
 try {
 const data = await FLYYB.apiFetch('/api/trips');
@@ -125,7 +125,7 @@ await FLYYB.apiFetch('/api/trips', {
 method: 'POST',
 body: JSON.stringify({ action: 'cancel', tripId }),
 });
-allTrips = allTrips.map(t => t.id === tripId ? { …t, status: 'cancelled' } : t);
+allTrips = allTrips.map(t => t.id === tripId ? { t, status: 'cancelled' } : t);
 renderTrips(activeFilter);
 FLYYB.log('Trips: cancelled —', tripId);
 } catch (ex) {
