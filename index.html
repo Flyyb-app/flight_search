@@ -1068,8 +1068,8 @@ async function apInput(inp, codeId, wrapId, dropId) {
 
       if (!data.length) { dd.classList.remove('open'); return; }
 
-      dd.innerHTML = data.map(a => `
-        <div class="ap-item" onmousedown="selectAirport('${a.code}','${a.city.replace(/'/g,"\\'")}','${a.name.replace(/'/g,"\\'")}','${wrapId}','${codeId}','${dropId}')">
+      dd.innerHTML = data.map((a,idx) => `
+        <div class="ap-item" data-code="${a.code}" data-city="${a.city.replace(/"/g,'&quot;')}" data-name="${a.name.replace(/"/g,'&quot;')}" data-wrap="${wrapId}" data-code-id="${codeId}" data-drop="${dropId}" onmousedown="apSelect(this)">
           <div class="ap-item-left">
             <div class="ap-item-name">${a.name}</div>
             <div class="ap-item-city">${a.city}, ${a.country}</div>
@@ -1096,6 +1096,17 @@ function selectAirport(code, city, name, wrapId, codeId, dropId) {
 
   const ap = { code, city, name };
   if (wrapId === 'fw') FA = ap; else TA = ap;
+}
+
+// Called from data-attribute onmousedown — avoids nested quote issues in HTML
+function apSelect(el) {
+  const code   = el.dataset.code;
+  const city   = el.dataset.city;
+  const name   = el.dataset.name;
+  const wrapId = el.dataset.wrap;
+  const codeId = el.dataset.codeId;
+  const dropId = el.dataset.drop;
+  selectAirport(code, city, name, wrapId, codeId, dropId);
 }
 
 // -- DATE PARSING ----------------------------------------------
@@ -1508,7 +1519,7 @@ async function doVerifyOTP(){
       <div class="reg-success">
         <div class="reg-success-icon">🎉</div>
         <div class="reg-success-title">Account Verified!</div>
-        <p class="reg-success-msg">Welcome to FLYYB, ${data.user.name}!<br>Your FLYYB ID: <span style="color:var(--gold);font-family:'DM Mono',monospace">${data.user.flyybId}</span></p>
+        <p class="reg-success-msg">Welcome to FLYYB, ${data.user.name}!<br>Your FLYYB ID: <span style="color:var(--gold);font-family:"DM Mono",monospace">${data.user.flyybId}</span></p>
         <div class="reg-success-btns">
           <button class="reg-proceed-btn" onclick="proceedAfterReg()">PROCEED AS LOGGED IN →</button>
           <button class="auth-social" onclick="dismissRegSuccess()">Continue as Visitor</button>
@@ -1828,7 +1839,7 @@ function renderRoundTrip(outFlights, retFlights, from, to, dep, ret) {
       <div class="results-title">${from.city} → ${to.city}</div>
       <div class="results-count">${outFlights.length} outbound · ${dep}</div>
     </div>
-    <div id="outbound-selection-msg" style="font-size:.72rem;color:var(--gold);margin-bottom:8px;font-family:'DM Mono',monospace;display:none">✓ Outbound selected — now pick your return flight below</div>`;
+    <div id="outbound-selection-msg" style="font-size:.72rem;color:var(--gold);margin-bottom:8px;font-family:"DM Mono",monospace;display:none">✓ Outbound selected — now pick your return flight below</div>`;
   outFlights.forEach(f => { h += buildFlightCard(f, from, to, dep, 'outbound'); });
 
   h += `
@@ -2162,7 +2173,7 @@ function buildPaxForms(){
       <div class="pf"><label>Last Name<span class="req">*</span></label><input type="text" placeholder="Smith" id="pf${i}b" value="${i===0&&authUser?authUser.name.split(' ')[1]||'':''}"></div>
       <div class="pf"><label>Date of Birth<span class="req">*</span></label>
         <div style="position:relative;display:block;width:100%;max-width:100%;box-sizing:border-box;overflow:hidden">
-          <input type="date" id="pf${i}c" onclick="this.showPicker&&this.showPicker()" style="color-scheme:dark;background:rgba(15,25,34,.95);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:11px 40px 11px 13px;width:100%;max-width:100%;outline:none;box-sizing:border-box;display:block">
+          <input type="date" id="pf${i}c" onclick="this.showPicker&&this.showPicker()" style="color-scheme:dark;background:rgba(15,25,34,.95);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:"DM Sans",sans-serif;font-size:.9rem;padding:11px 40px 11px 13px;width:100%;max-width:100%;outline:none;box-sizing:border-box;display:block">
           <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="3" y="4" width="18" height="17" rx="2" stroke="#d4a843" stroke-width="1.5" fill="none"/>
             <path d="M3 9h18" stroke="#d4a843" stroke-width="1.5"/>
@@ -2623,11 +2634,11 @@ async function rescheduleTrip(ref,currentDepDate,originalPrice,sym){
     <div style="background:#0f1922;border:1px solid rgba(212,168,67,.3);border-radius:8px;padding:28px;max-width:440px;width:100%;position:relative">
       <button onclick="document.getElementById('reschedule-popup').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(245,240,232,.4);font-size:1.1rem;cursor:pointer">✕</button>
       <div id="rs-step1">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;margin-bottom:4px">Reschedule Flight</div>
+        <div style="font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.1em;margin-bottom:4px">Reschedule Flight</div>
         <div style="font-size:.75rem;color:rgba(245,240,232,.4);margin-bottom:18px">Pick a new date — fees shown before you pay</div>
         <div style="position:relative;width:100%;margin-bottom:14px">
           <input type="text" id="reschedule-display" readonly placeholder="Select a date"
-            style="background:rgba(255,255,255,.05);border:1px solid rgba(212,168,67,.3);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.95rem;padding:14px 44px 14px 16px;width:100%;box-sizing:border-box;cursor:pointer"
+            style="background:rgba(255,255,255,.05);border:1px solid rgba(212,168,67,.3);border-radius:2px;color:var(--paper);font-family:"DM Sans",sans-serif;font-size:.95rem;padding:14px 44px 14px 16px;width:100%;box-sizing:border-box;cursor:pointer"
             onclick="document.getElementById('reschedule-picker').showPicker&&document.getElementById('reschedule-picker').showPicker()">
           <input type="date" id="reschedule-picker" min="${minDate}" max="${maxDate}"
             style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer"
@@ -2649,7 +2660,7 @@ async function rescheduleTrip(ref,currentDepDate,originalPrice,sym){
         <button class="auth-btn" id="rs-proceed-btn" style="display:none" onclick="rsShowPayment()">PROCEED TO PAYMENT →</button>
       </div>
       <div id="rs-step2" style="display:none">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;margin-bottom:4px">Confirm &amp; Pay</div>
+        <div style="font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.1em;margin-bottom:4px">Confirm &amp; Pay</div>
         <div id="rs-payment-summary" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:14px 16px;margin-bottom:14px;font-size:.82rem;line-height:1.75"></div>
         <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,240,232,.35);margin-bottom:6px">Card Details</div>
         <div id="rs-card-element" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:14px 16px;margin-bottom:6px"></div>
@@ -2705,14 +2716,14 @@ async function rsDateChanged(val){
   _rsState.totalCharge=total;
   var preview=document.getElementById('rs-fee-preview');
   preview.innerHTML=
-    '<div style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.08em;margin-bottom:8px">Fee Breakdown</div>'
+    '<div style="color:var(--gold);font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:.08em;margin-bottom:8px">Fee Breakdown</div>'
     +'<div style="display:flex;justify-content:space-between"><span style="color:rgba(245,240,232,.55)">Current ticket price</span><span>'+sym+origPrice.toFixed(2)+'</span></div>'
     +'<div style="display:flex;justify-content:space-between"><span style="color:rgba(245,240,232,.55)">New date price</span><span>'+sym+newPrice.toFixed(2)+'</span></div>'
     +'<div style="display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07)"><span style="color:rgba(245,240,232,.55)">Reschedule fee (10%)</span><span>'+sym+rescheduleFee.toFixed(2)+'</span></div>'
     +(priceDiff>0?'<div style="display:flex;justify-content:space-between"><span style="color:rgba(245,240,232,.55)">Price difference</span><span>+'+sym+priceDiff.toFixed(2)+'</span></div>':'<div style="font-size:.72rem;color:#5daa72;margin-top:2px">✓ New date cheaper — no price diff charge</div>')
     +'<div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;margin-top:6px">'
     +'<span style="color:var(--paper)">Total Due</span>'
-    +'<span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:1.15rem">'+sym+total.toFixed(2)+'</span></div>';
+    +'<span style="color:var(--gold);font-family:"Bebas Neue",sans-serif;font-size:1.15rem">'+sym+total.toFixed(2)+'</span></div>';
   preview.style.display='block';
   document.getElementById('rs-proceed-btn').style.display='block';
 }
@@ -2730,13 +2741,13 @@ function rsShowPayment(){
   document.getElementById('rs-step1').style.display='none';
   document.getElementById('rs-step2').style.display='block';
   document.getElementById('rs-payment-summary').innerHTML=
-    '<div style="margin-bottom:5px"><span style="color:rgba(245,240,232,.5)">Booking: </span><span style="font-family:'DM Mono',monospace;color:var(--gold)">'+_rsState.ref+'</span></div>'
+    '<div style="margin-bottom:5px"><span style="color:rgba(245,240,232,.5)">Booking: </span><span style="font-family:"DM Mono",monospace;color:var(--gold)">'+_rsState.ref+'</span></div>'
     +'<div style="margin-bottom:5px"><span style="color:rgba(245,240,232,.5)">New date: </span><span>'+dateDisp+'</span></div>'
     +'<div style="margin-bottom:5px"><span style="color:rgba(245,240,232,.5)">Reschedule fee (10%): </span><span>'+sym+rescheduleFee.toFixed(2)+'</span></div>'
     +(priceDiff>0?'<div style="margin-bottom:5px"><span style="color:rgba(245,240,232,.5)">Price diff: </span><span>+'+sym+priceDiff.toFixed(2)+'</span></div>':'<div style="font-size:.73rem;color:#5daa72;margin-bottom:5px">✓ New date cheaper — no price diff</div>')
     +'<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.07);padding-top:8px;margin-top:4px">'
     +'<span style="color:var(--paper);font-weight:500">Total</span>'
-    +'<span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:1.3rem">'+sym+total.toFixed(2)+'</span></div>';
+    +'<span style="color:var(--gold);font-family:"Bebas Neue",sans-serif;font-size:1.3rem">'+sym+total.toFixed(2)+'</span></div>';
   rsInitStripe();
 }
 
@@ -2977,7 +2988,7 @@ async function loadProfileContent(){
           <div style="font-size:1.4rem">&#x2756;</div>
           <div>
             <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.4)">FLYYB Member ID</div>
-            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--gold);letter-spacing:.2em">${d.flyybId||'--'}</div>
+            <div style="font-family:"DM Mono",monospace;font-size:1.1rem;color:var(--gold);letter-spacing:.2em">${d.flyybId||'--'}</div>
           </div>
         </div>
         <div>
@@ -2988,7 +2999,7 @@ async function loadProfileContent(){
             <input type="text" id="prof-email" value="${d.email||''}" readonly style="opacity:.7"></div>
             <div class="pf"><label>Phone</label><input type="text" id="prof-phone" value="${d.phone||'--'}" readonly style="opacity:.7"></div>
             <div class="pf"><label>Currency</label>
-              <select id="prof-currency" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:12px 14px;width:100%;outline:none">
+              <select id="prof-currency" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:var(--paper);font-family:"DM Sans",sans-serif;font-size:.9rem;padding:12px 14px;width:100%;outline:none">
                 <option value="">Loading...</option>
               </select>
             </div>
@@ -3011,7 +3022,7 @@ async function loadProfileContent(){
         </div>
         <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
           <div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust);margin-bottom:12px">Danger Zone</div>
-          <button onclick="deleteAccount()" style="background:none;border:1px solid rgba(181,69,27,.3);border-radius:2px;color:var(--rust);font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.1em;padding:9px 20px;cursor:pointer">Delete Account</button>
+          <button onclick="deleteAccount()" style="background:none;border:1px solid rgba(181,69,27,.3);border-radius:2px;color:var(--rust);font-family:"DM Sans",sans-serif;font-size:.78rem;letter-spacing:.1em;padding:9px 20px;cursor:pointer">Delete Account</button>
         </div>
       </div>`;
     const crRes=await fetch(`${FLYYB_API}/api/profiles?action=currencies`);
