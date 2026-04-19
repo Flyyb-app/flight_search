@@ -1320,10 +1320,12 @@ async function doLogin(){
   if(!pw){err('lerr','Password required');return;}
   setAuthBtnLoading('l-btn',true,'SIGN IN');
   try {
-    const _encPw = await FLYYB_CRYPTO.encrypt(pw);
+    // Password sent as plaintext — TLS (HTTPS) handles transport encryption.
+    // Client-side AES-GCM is session-keyed (random IV) so bcrypt compare on server
+    // would always fail. bcrypt hashing happens server-side after plaintext receipt.
     const res=await fetch(`${FLYYB_API}/api/auth?action=login`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:em,password:_encPw,_enc:true})
+      body:JSON.stringify({email:em,password:pw})
     });
     const data=await res.json();
     if(!res.ok){err('lerr',data.error||'Login failed');return;}
@@ -1460,7 +1462,9 @@ async function doReg(){
   const termsEl=document.getElementById('r-terms');if(termsEl&&!termsEl.checked){err('rerr','Please accept the Terms & Conditions to continue');return;}
   setAuthBtnLoading('r-btn',true,'CREATE ACCOUNT');
   try{
-    const res=await securePost(`${FLYYB_API}/api/auth?action=register`,{name,email:em,password:pw,currency},null,['password']);
+    // Password sent as plaintext over HTTPS — not encrypted client-side.
+    // See doLogin comment for why AES-GCM doesn't work for passwords.
+    const res=await securePost(`${FLYYB_API}/api/auth?action=register`,{name,email:em,password:pw,currency});
     const data=await res.json();
     if(!res.ok){err('rerr',data.error||'Registration failed');return;}
     pendingRegEmail=em;
