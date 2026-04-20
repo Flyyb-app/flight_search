@@ -1992,8 +1992,11 @@ function showFlight(idx) {
     ? `${f.via.code} · ${f.via.city}${layover ? `<br><span style="font-size:.7rem;color:rgba(245,240,232,.4)">Layover: ${layover}</span>` : ''}`
     : '-';
   const depDateDisplay = document.getElementById('dep-d')?.value || '';
+  const retDateDisplay = document.getElementById('ret-d')?.value || '';
+  const isRoundTrip    = !!retDateDisplay;
   document.getElementById('fm-dets').innerHTML = `
-    <div class="fm-item"><label>Date</label><span>${depDateDisplay}</span></div>
+    <div class="fm-item"><label>${isRoundTrip ? 'Outbound Date' : 'Date'}</label><span>${depDateDisplay}</span></div>
+    ${isRoundTrip ? `<div class="fm-item"><label>Return Date</label><span>${retDateDisplay}</span></div>` : ''}
     <div class="fm-item"><label>Departure</label><span>${f.departure}</span></div>
     <div class="fm-item"><label>Arrival</label><span>${f.arrival}</span></div>
     <div class="fm-item"><label>Duration</label><span>${f.duration}</span></div>
@@ -3455,6 +3458,7 @@ function airaSelectFlight(idx){
   var msg=airaAddMsg('aira',html);
   airaAddButtons(msg,[
     {label:'Book Now \u2192',primary:true,action:function(){airaStartBooking();}},
+    {label:'Add Return Flight',action:function(){airaAskReturnFlight();}},
     {label:'Different flight',action:function(){airaAddMsg('user','Show other options');airaAddMsg('aira','Sure! Here are all the options again.');airaShowFlights(airaState.flightResults,'','');}},
     {label:'View full details',action:function(){airaOpenFlightModal(f);}}
   ]);
@@ -3462,10 +3466,83 @@ function airaSelectFlight(idx){
   airaHistory.push({role:'assistant',content:'User selected '+f.airline?.name+' '+f.departure+' to '+f.arrival});
 }
 
+function airaShowReturnFlights(flights,from,to,date,isoDate){
+  airaState.returnFlightResults=flights;
+  if(isoDate)airaState.returnDate=isoDate;
+  var sym=getSymbol();
+  var header='Here are return flights from <b>'+from+'</b> to <b>'+to+'</b>'+(date?' on <b>'+date+'</b>':'')+':<br><br>';
+  var cards=flights.slice(0,3).map(function(f,i){
+    return '<div class="aira-flight-card" id="aira-rf-'+i+'" onclick="airaSelectReturnFlight('+i+')">'
+      +'<div class="aira-flight-row">'
+      +'<div class="aira-flight-times">'+f.departure+' → '+f.arrival+'</div>'
+      +'<div class="aira-flight-price">'+sym+(f.price?.perPerson||0).toLocaleString()+'</div>'
+      +'</div>'
+      +'<div class="aira-flight-detail">'+f.airline?.name+' · '+f.duration+(f.stops===0?' · Nonstop':' · '+f.stops+' stop')+'</div>'
+      +'</div>';
+  }).join('');
+  airaAddMsg('aira',header+cards);
+  airaSpeak('Here are the return flights. Pick one to add to your booking!');
+}
+
+function airaSelectReturnFlight(idx){
+  var f=(airaState.returnFlightResults||[])[idx];
+  if(!f)return;
+  airaState.returnFlight=f;
+  window._roundTripReturn=f;
+  // Sync ret-d inputs
+  if(airaState.returnDate){
+    var _rdp=airaState.returnDate.split('-');
+    var _MOR=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var _retEl=document.getElementById('ret-d');
+    var _retHid=document.querySelectorAll('.date-wrap input[type=date]')[1];
+    if(_retEl)_retEl.value=_rdp[2]+'-'+_MOR[parseInt(_rdp[1])-1]+'-'+_rdp[0];
+    if(_retHid)_retHid.value=airaState.returnDate;
+  }
+  document.querySelectorAll('.aira-flight-card').forEach(function(el){el.classList.remove('selected');});
+  var el=document.getElementById('aira-rf-'+idx);
+  if(el)el.classList.add('selected');
+  var sym=getSymbol();
+  var html='Return flight added: <b>'+f.airline?.name+'</b><br>'
+    +f.origin?.code+' → '+f.destination?.code
+    +' · '+f.departure+' - '+f.arrival
+    +'<br><b>'+sym+(f.price?.perPerson||0).toLocaleString()+'</b> per person';
+  var msg=airaAddMsg('aira',html);
+  airaAddButtons(msg,[
+    {label:'Book Both Flights →',primary:true,action:function(){airaState.step='confirm_flight';airaStartBooking();}},
+    {label:'One-way only',action:function(){airaState.returnFlight=null;window._roundTripReturn=null;airaState.step='confirm_flight';airaStartBooking();}}
+  ]);
+  airaSpeak('Great! Ready to book both flights?');
+}
+
 function airaOpenFlightModal(f){
   if(!flights.includes(f))flights.push(f);
   toggleAira();
   showFlight(flights.indexOf(f));
+}
+
+// ── RETURN FLIGHT ─────────────────────────────────────────────
+function airaAskReturnFlight(){
+  if(!airaState.flight)return;
+  airaAddMsg('user','Add return flight');
+  var f=airaState.flight;
+  var msg=airaAddMsg('aira','Sure! When would you like to return from <b>'+f.destination?.code+'</b> to <b>'+f.origin?.code+'</b>?<br>Just tell me the date — e.g. "next Friday" or "20 May".');
+  airaHistory.push({role:'assistant',content:'Asking for return date'});
+  airaState.step='ask_return_date';
+  airaState.awaitingReturnDate=true;
+}
+
+function airaHandleReturnDate(dateText){
+  airaState.awaitingReturnDate=false;
+  var f=airaState.flight;
+  if(!f)return;
+  airaAddMsg('user',dateText);
+  airaAddMsg('aira','Searching return flights from <b>'+f.destination?.code+'</b> to <b>'+f.origin?.code+'</b>...');
+  // Build a search message for the return route
+  var returnMsg='flights from '+f.destination?.city+' to '+f.origin?.city+' on '+dateText;
+  airaState.step='select_return_flight';
+  // Send to AIRA backend as a search
+  var context='Name: '+(authUser&&authUser.name||'Guest')+'\nCurrency: '+(authUser&&authUser.currency||'USD');
+  airaSend(returnMsg,context,true);
 }
 
 // ── BOOKING FLOW ──────────────────────────────────────────────
@@ -3561,6 +3638,15 @@ function airaEnterPassengerManually(idx){
         var _depHid=document.querySelector('.date-wrap input[type=date]');
         if(_depEl)_depEl.value=_dp[2]+'-'+_MO[parseInt(_dp[1])-1]+'-'+_dp[0];
         if(_depHid)_depHid.value=airaState.searchDate;
+      }
+      // Sync return date display if round-trip booked via AIRA
+      if(airaState.returnFlight&&airaState.returnDate){
+        var _rdp=airaState.returnDate.split('-');
+        var _MOR=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var _retEl=document.getElementById('ret-d');
+        var _retHid=document.querySelectorAll('.date-wrap input[type=date]')[1];
+        if(_retEl)_retEl.value=_rdp[2]+'-'+_MOR[parseInt(_rdp[1])-1]+'-'+_rdp[0];
+        if(_retHid)_retHid.value=airaState.returnDate;
       }
       toggleAira();
       // Open flight modal then auto-start pay
@@ -3938,6 +4024,12 @@ function airaUserSend(){
 
 async function airaSend(msg){
   if(airaThinking)return;
+  // Intercept return date input
+  if(airaState.awaitingReturnDate&&msg.trim()){
+    airaHandleReturnDate(msg.trim());
+    document.getElementById('aira-inp').value='';
+    return;
+  }
   airaThinking=true;
   airaHistory.push({role:'user',content:msg});
   var typing=airaShowTyping();
@@ -3955,7 +4047,12 @@ async function airaSend(msg){
     airaHideTyping();
     if(data.action==='show_flights'&&data.flights&&data.flights.length){
       airaFlightResults=data.flights;
-      airaShowFlights(data.flights,data.from||'',data.to||'',data.date||'',data.isoDate||'');
+      if(airaState.step==='select_return_flight'){
+        // Show return flights and allow selection as return leg
+        airaShowReturnFlights(data.flights,data.from||'',data.to||'',data.date||'',data.isoDate||'');
+      }else{
+        airaShowFlights(data.flights,data.from||'',data.to||'',data.date||'',data.isoDate||'');
+      }
     }else{
       var reply=data.reply||"I'm not sure about that. Could you rephrase?";
       airaAddMsg('aira',reply);
