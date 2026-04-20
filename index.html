@@ -1250,7 +1250,8 @@ function regMethod(m){
   document.getElementById('re-fields').style.display=m==='email'?'':'none';
   document.getElementById('rp-fields').style.display=m==='phone'?'':'none';
   document.getElementById('r-btn').textContent=m==='phone'?'SEND OTP':'CREATE ACCOUNT';
-  document.getElementById('r-otp-wrap').style.display='none';
+  var _otp=document.getElementById('r-otp-wrap');if(_otp)_otp.style.display='none';
+  var _otpStep=document.getElementById('r-otp-step');if(_otpStep)_otpStep.style.display='none';
 }
 function otn(el,p,n){if(el.value&&n)document.getElementById(n).focus();if(!el.value&&p)document.getElementById(p).focus()}
 function otpVal(ids){return ids.map(id=>{const e=document.getElementById(id);return e?e.value:''}).join('')}
@@ -1992,7 +1993,7 @@ function showFlight(idx) {
     ? `${f.via.code} · ${f.via.city}${layover ? `<br><span style="font-size:.7rem;color:rgba(245,240,232,.4)">Layover: ${layover}</span>` : ''}`
     : '-';
   const depDateDisplay = document.getElementById('dep-d')?.value || '';
-  const retDateDisplay = document.getElementById('ret-d')?.value || '';
+  const retDateDisplay = (window._roundTripReturn && document.getElementById('ret-d')?.value) ? document.getElementById('ret-d').value : '';
   const isRoundTrip    = !!retDateDisplay;
   document.getElementById('fm-dets').innerHTML = `
     <div class="fm-item"><label>${isRoundTrip ? 'Outbound Date' : 'Date'}</label><span>${depDateDisplay}</span></div>
@@ -3647,6 +3648,15 @@ function airaEnterPassengerManually(idx){
         var _retHid=document.querySelectorAll('.date-wrap input[type=date]')[1];
         if(_retEl)_retEl.value=_rdp[2]+'-'+_MOR[parseInt(_rdp[1])-1]+'-'+_rdp[0];
         if(_retHid)_retHid.value=airaState.returnDate;
+        // Ensure _roundTripReturn is set so showFlight shows both dates
+        window._roundTripReturn=airaState.returnFlight;
+      } else if(!airaState.returnFlight){
+        // Clear return date inputs when AIRA books one-way only
+        var _retEl2=document.getElementById('ret-d');
+        var _retHid2=document.querySelectorAll('.date-wrap input[type=date]')[1];
+        if(_retEl2)_retEl2.value='';
+        if(_retHid2)_retHid2.value='';
+        window._roundTripReturn=null;
       }
       toggleAira();
       // Open flight modal then auto-start pay
