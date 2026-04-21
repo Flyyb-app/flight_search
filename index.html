@@ -826,6 +826,16 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7) sepia(1
       <div id="fm-action" style="margin-top:20px"></div>
     </div>
     <div id="pay-view" style="display:none">
+      <!-- Minimized flight summary — always visible during booking flow -->
+      <div id="booking-flight-summary" style="background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.2);border-radius:4px;margin-bottom:14px;overflow:hidden">
+        <button onclick="toggleBookingSummary()" style="width:100%;background:none;border:none;color:var(--paper);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78rem">
+          <span id="bfs-collapsed-text" style="color:rgba(212,168,67,.9);letter-spacing:.05em">✈ VIEW FLIGHT DETAILS</span>
+          <span id="bfs-chevron" style="color:rgba(212,168,67,.6);font-size:.7rem">▼</span>
+        </button>
+        <div id="bfs-details" style="display:none;padding:0 14px 12px;font-size:.78rem;color:rgba(245,240,232,.75);line-height:1.8">
+          <div id="bfs-content"></div>
+        </div>
+      </div>
       <div class="pay-steps">
         <div class="ps active" id="ps1"><div class="ps-dot">1</div><div class="ps-lbl">Passengers</div></div>
         <div class="ps" id="ps2"><div class="ps-dot">2</div><div class="ps-lbl">Seats</div></div>
@@ -1527,13 +1537,12 @@ async function doVerifyOTP(){
         <p class="reg-success-msg">Welcome to FLYYB, ${data.user.name}!<br>Your FLYYB ID: <span style="color:var(--gold);font-family:"DM Mono",monospace">${data.user.flyybId}</span></p>
         <div class="reg-success-btns">
           <button class="reg-proceed-btn" onclick="proceedAfterReg()">PROCEED AS LOGGED IN →</button>
-          <button class="auth-social" onclick="dismissRegSuccess()">Continue as Visitor</button>
         </div>
       </div>`;
   } catch(e){
     err('rerr','Verification failed. Please try again.');
-  } finally {
-    setAuthBtnLoading('r-verify-btn',false,'VERIFY & ACTIVATE');
+    var _vb=document.getElementById('r-verify-btn');
+    if(_vb){_vb.disabled=false;_vb.textContent='VERIFY & ACTIVATE';}
   }
 }
 
@@ -1947,7 +1956,11 @@ function bookRoundTrip() {
   const sym = f.price?.symbol||'$';
   const total = (f.price?.perPerson||0) + (r.price?.perPerson||0);
   document.getElementById('fm-pr').textContent = sym + total.toLocaleString() + ' ' + (f.price?.currency||'USD');
+  const _depDVal = document.getElementById('dep-d')?.value || '';
+  const _retDVal = document.getElementById('ret-d')?.value || '';
   document.getElementById('fm-dets').innerHTML = `
+    <div class="fm-item"><label>Outbound Date</label><span>${_depDVal}</span></div>
+    <div class="fm-item"><label>Return Date</label><span>${_retDVal}</span></div>
     <div class="fm-item"><label>Outbound</label><span>${f.origin?.code} → ${f.destination?.code} · ${f.departure} - ${f.arrival}</span></div>
     <div class="fm-item"><label>Out Flight</label><span>${f.airline?.name} ${f.flightNumber}</span></div>
     <div class="fm-item"><label>Return</label><span>${r.origin?.code} → ${r.destination?.code} · ${r.departure} - ${r.arrival}</span></div>
@@ -2079,7 +2092,7 @@ async function openCreditsModal() {
   try {
     const res = await fetch(`${FLYYB_API}/api/booking?action=credits`, { headers: { Authorization: `Bearer ${authToken}` } });
     const data = await res.json();
-    const txns = data.transactions || [];
+    const txns = (data.transactions || []).filter(function(t){ return t.type !== 'reschedule_fee'; });
     el.innerHTML = `
       <div class="credits-balance-big">${authUser?.currencySymbol||"$"}${data.balance.toFixed(2)}</div>
       <div class="credits-balance-lbl">Available Credits</div>
@@ -2148,10 +2161,44 @@ function forceLogout() {
 ['click','keydown','mousemove','touchstart','scroll'].forEach(function(e) {
   document.addEventListener(e, function() { if (authUser) resetSessionTimers(); }, { passive: true });
 });
+function populateBookingSummary(){
+  var f=curFlight, rt=window._roundTripReturn||null;
+  var sym=f?(f.price?.symbol||'$'):'$';
+  var depDate=document.getElementById('dep-d')?.value||'';
+  var retDate=(rt&&document.getElementById('ret-d')?.value)||'';
+  var lines=[];
+  if(f){
+    lines.push('<b>'+f.origin?.code+' → '+f.destination?.code+'</b>'
+      +(depDate?' · '+depDate:'')
+      +' · '+f.departure+'-'+f.arrival
+      +' · '+f.airline?.name+' '+f.flightNumber);
+    lines.push('Cabin: '+(f.cabin.charAt(0).toUpperCase()+f.cabin.slice(1))
+      +' · '+sym+(f.price?.perPerson||0).toLocaleString()+'/person');
+  }
+  if(rt){
+    lines.push('<b>'+rt.origin?.code+' → '+rt.destination?.code+'</b>'
+      +(retDate?' · '+retDate:'')
+      +' · '+rt.departure+'-'+rt.arrival
+      +' · '+rt.airline?.name+' '+rt.flightNumber);
+  }
+  var el=document.getElementById('bfs-content');
+  if(el)el.innerHTML=lines.join('<br>');
+  var collapsed=document.getElementById('bfs-collapsed-text');
+  if(collapsed&&f)collapsed.textContent='✈ '+f.origin?.code+' → '+f.destination?.code+(rt?' + '+rt.origin?.code+' → '+rt.destination?.code:'')+' — VIEW DETAILS';
+}
+function toggleBookingSummary(){
+  var d=document.getElementById('bfs-details');
+  var ch=document.getElementById('bfs-chevron');
+  if(!d)return;
+  var open=d.style.display!=='none';
+  d.style.display=open?'none':'block';
+  if(ch)ch.textContent=open?'▼':'▲';
+}
 function startPay(){
   document.getElementById('finfo').style.display='none';
   document.getElementById('pay-view').style.display='block';
   payStep=1;selSeats=[];selectedAddons={};applyCredits=false;
+  populateBookingSummary();
   Promise.all([loadSavedPassengers(),fetchCredits()]).then(()=>{
     buildPaxForms();setStep(1);
   });
@@ -2644,23 +2691,12 @@ async function rescheduleTrip(ref,currentDepDate,originalPrice,sym){
       <div id="rs-step1">
         <div style="font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.1em;margin-bottom:4px">Reschedule Flight</div>
         <div style="font-size:.75rem;color:rgba(245,240,232,.4);margin-bottom:18px">Pick a new date — fees shown before you pay</div>
-        <div style="position:relative;width:100%;margin-bottom:14px">
-          <input type="text" id="reschedule-display" readonly placeholder="Select a date"
-            style="background:rgba(255,255,255,.05);border:1px solid rgba(212,168,67,.3);border-radius:2px;color:var(--paper);font-family:"DM Sans",sans-serif;font-size:.95rem;padding:14px 44px 14px 16px;width:100%;box-sizing:border-box;cursor:pointer"
-            onclick="document.getElementById('reschedule-picker').showPicker&&document.getElementById('reschedule-picker').showPicker()">
-          <input type="date" id="reschedule-picker" min="${minDate}" max="${maxDate}"
-            style="position:absolute;inset:0;opacity:0;width:100%;cursor:pointer"
+        <div class="date-wrap" style="margin-bottom:14px;width:100%">
+          <input type="text" id="reschedule-display" readonly placeholder="Select new date"
+            style="background:rgba(255,255,255,.05);border:1px solid rgba(212,168,67,.3);border-radius:2px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:.95rem;padding:14px 16px;width:100%;box-sizing:border-box;cursor:pointer">
+          <input type="date" id="reschedule-picker" class="date-hidden" min="${minDate}" max="${maxDate}"
             onchange="rsDateChanged(this.value)">
-          <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none" width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="4" width="18" height="17" rx="2" stroke="#d4a843" stroke-width="1.5" fill="none"/>
-            <path d="M3 9h18" stroke="#d4a843" stroke-width="1.5"/>
-            <path d="M8 2v4M16 2v4" stroke="#d4a843" stroke-width="1.5" stroke-linecap="round"/>
-            <rect x="7" y="12" width="2.5" height="2.5" rx=".4" fill="#d4a843"/>
-            <rect x="10.8" y="12" width="2.5" height="2.5" rx=".4" fill="#d4a843"/>
-            <rect x="14.5" y="12" width="2.5" height="2.5" rx=".4" fill="#d4a843"/>
-            <rect x="7" y="15.5" width="2.5" height="2.5" rx=".4" fill="#d4a843"/>
-            <rect x="10.8" y="15.5" width="2.5" height="2.5" rx=".4" fill="#d4a843"/>
-          </svg>
+        </div>
         </div>
         <div id="rs-fee-preview" style="display:none;background:rgba(212,168,67,.05);border:1px solid rgba(212,168,67,.18);border-radius:4px;padding:14px 16px;margin-bottom:12px;font-size:.82rem;line-height:1.75"></div>
         <div id="reschedule-err" style="color:var(--rust);font-size:.75rem;min-height:14px;margin-bottom:6px"></div>
@@ -2818,7 +2854,7 @@ async function rsConfirmPayment(){
 async function submitReschedule(ref){}
 
 
-function downloadBookingPDF(){
+function buildBookingPrintData(){
   var f=curFlight;
   var rt=window._roundTripReturn||null;
   var ref=document.getElementById('bref')?.textContent||'';
@@ -2826,26 +2862,46 @@ function downloadBookingPDF(){
   var paxCount=parseInt(document.getElementById('pax')?.value)||1;
   var sym=f?(f.price?.symbol||'$'):'$';
   var depDate=document.getElementById('dep-d')?.value||'';
-  var retDate=document.getElementById('ret-d')?.value||'';
-  var paxRows='';
+  var retDate=(rt&&document.getElementById('ret-d')?.value)||'';
+  // Passengers
+  var passengers=[];
   for(var i=0;i<paxCount;i++){
     var fn=document.getElementById('pf'+i+'a')?.value||'';
     var ln=document.getElementById('pf'+i+'b')?.value||'';
     var dob=document.getElementById('pf'+i+'c')?.value||'';
     var gender=document.getElementById('pf'+i+'e')?.value||'';
-    if(fn||ln){
-      paxRows+='<tr>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+(i+1)+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+fn+' '+ln+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+dob+'</td>'
-        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+gender+'</td>'
-        +'</tr>';
-    }
+    if(fn||ln) passengers.push({num:i+1,name:fn+' '+ln,dob,gender});
   }
-  var price=f?sym+(f.price?.perPerson||0).toLocaleString()+' '+(f.price?.currency||'USD'):'';
-  var retPrice=rt?sym+(rt.price?.perPerson||0).toLocaleString()+' '+(rt.price?.currency||'USD'):'';
+  // Seats
+  var seatsList=selSeats.length?selSeats.join(', '):'Not selected';
+  // Add-ons
+  var addonsList=Object.values(selectedAddons||{});
+  return{f,rt,ref,creditsMsg,sym,depDate,retDate,passengers,seatsList,addonsList,
+    price:f?sym+(f.price?.perPerson||0).toLocaleString()+' '+(f.price?.currency||'USD'):'',
+    retPrice:rt?sym+(rt.price?.perPerson||0).toLocaleString()+' '+(rt.price?.currency||'USD'):''};
+}
+
+function downloadBookingPDF(){
+  var d=buildBookingPrintData();
+  var f=d.f,rt=d.rt;
+  var paxRows=d.passengers.map(function(p){
+    return '<tr>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+p.num+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+p.name+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+p.dob+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+p.gender+'</td>'
+      +'</tr>';
+  }).join('');
+  var addonsHtml=d.addonsList.length
+    ?'<div class="section"><div class="section-title">Add-ons</div>'
+      +'<table><thead><tr><th>Add-on</th><th>Price</th></tr></thead><tbody>'
+      +d.addonsList.map(function(a){return '<tr>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+a.name+'</td>'
+        +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+d.sym+(a.price||0).toFixed(2)+'</td>'
+        +'</tr>';}).join('')
+      +'</tbody></table></div>':'';
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<title>FLYYB Booking '+ref+'</title>'
+    +'<title>FLYYB Booking '+d.ref+'</title>'
     +'<style>'
     +'body{font-family:Arial,sans-serif;color:#1a1a2e;margin:0;padding:40px;background:#fff}'
     +'.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #d4a843}'
@@ -2874,7 +2930,7 @@ function downloadBookingPDF(){
     +'</style></head><body>'
     +'<div class="header">'
     +'<div><div class="logo">FLY<span>YB</span></div><div class="tagline">fly with vibe</div></div>'
-    +'<div class="ref-box"><div class="ref-label">Booking Reference</div><div class="ref-val">'+ref+'</div><div class="status-badge">&#x2713; CONFIRMED</div></div>'
+    +'<div class="ref-box"><div class="ref-label">Booking Reference</div><div class="ref-val">'+d.ref+'</div><div class="status-badge">&#x2713; CONFIRMED</div></div>'
     +'</div>'
     +(f?'<div class="route-hero">'
       +'<div class="route-city"><div class="route-code">'+(f.origin?.code||'')+'</div><div class="route-name">'+(f.origin?.city||'')+'</div></div>'
@@ -2887,26 +2943,30 @@ function downloadBookingPDF(){
       +'</div>':'')
     +'<div class="section"><div class="section-title">Outbound Flight</div>'
     +'<div class="info-grid">'
-    +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+depDate+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+d.depDate+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Flight No.</div><div class="info-val">'+(f?f.flightNumber:'')+'</div></div>'
     +'<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+(f?f.airline?.name:'')+'</div></div>'
     +'<div class="info-item"><div class="info-label">Departure</div><div class="info-val">'+(f?f.departure:'')+'</div></div>'
     +'<div class="info-item"><div class="info-label">Arrival</div><div class="info-val">'+(f?f.arrival:'')+'</div></div>'
     +'<div class="info-item"><div class="info-label">Duration</div><div class="info-val">'+(f?f.duration:'')+'</div></div>'
     +'<div class="info-item"><div class="info-label">Cabin</div><div class="info-val">'+(f?f.cabin.charAt(0).toUpperCase()+f.cabin.slice(1):'')+'</div></div>'
-    +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+price+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Seats</div><div class="info-val">'+d.seatsList+'</div></div>'
+    +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+d.price+'</div></div>'
     +'</div></div>'
     +(rt?'<div class="section"><div class="section-title">Return Flight</div>'
       +'<div class="info-grid">'
-      +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+retDate+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Date</div><div class="info-val">'+d.retDate+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Flight No.</div><div class="info-val">'+rt.flightNumber+'</div></div>'
       +'<div class="info-item"><div class="info-label">Airline</div><div class="info-val">'+rt.airline?.name+'</div></div>'
       +'<div class="info-item"><div class="info-label">Departure</div><div class="info-val">'+rt.departure+'</div></div>'
       +'<div class="info-item"><div class="info-label">Arrival</div><div class="info-val">'+rt.arrival+'</div></div>'
-      +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+retPrice+'</div></div>'
+      +'<div class="info-item"><div class="info-label">Price/Person</div><div class="info-val">'+d.retPrice+'</div></div>'
       +'</div></div>':'')
     +(paxRows?'<div class="section"><div class="section-title">Passengers</div>'
       +'<table><thead><tr><th>#</th><th>Name</th><th>Date of Birth</th><th>Gender</th></tr></thead>'
       +'<tbody>'+paxRows+'</tbody></table></div>':'')
-    +(creditsMsg?'<div class="credits-row">'+creditsMsg+'</div>':'')
+    +addonsHtml
+    +(d.creditsMsg?'<div class="credits-row">'+d.creditsMsg+'</div>':'')
     +'<div class="footer">Generated by FLYYB &middot; flyyb.vercel.app &middot; '
     +new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})
     +'<br>Please carry this confirmation to the airport. Safe travels! &#x2708;</div>'
@@ -3203,19 +3263,28 @@ async function airaDidSpeak(text){
 
 function airaCheckCompact(){/* no-op: new split layout always shows AIRA */}
 
+function _airaPickVoice(){
+  var voices=window.speechSynthesis.getVoices();
+  if(!voices||!voices.length)return false;
+  var femaleNames=['Samantha','Karen','Victoria','Moira','Fiona','Tessa','Veena','Zira','Hazel','Susan','Catherine','Allison','Ava','Joanna','Salli','Kendra','Kimberly','Ivy'];
+  airaVoice=femaleNames.reduce(function(found,name){return found||voices.find(function(v){return v.name.includes(name);});},null)||
+            voices.find(function(v){return /female/i.test(v.name);})||
+            voices.find(function(v){return v.lang==='en-US'&&!/(david|mark|alex|daniel|fred|tom|rishi|mohan)/i.test(v.name);})||
+            voices.find(function(v){return v.lang.startsWith('en-')&&!/(david|mark|alex|daniel|fred|tom|rishi)/i.test(v.name);})||
+            voices.find(function(v){return v.lang.startsWith('en');})||voices[0]||null;
+  return true;
+}
 function initVoices(){
   if(!window.speechSynthesis)return;
-  window.speechSynthesis.onvoiceschanged=function(){
-    var voices=window.speechSynthesis.getVoices();
-    // Priority: named female voices → gender-labelled female → any en-US → en-GB → en
-    var femaleNames=['Samantha','Karen','Victoria','Moira','Fiona','Tessa','Veena','Zira','Hazel','Susan','Catherine','Allison','Ava','Joanna','Salli','Kendra','Kimberly','Ivy'];
-    airaVoice=femaleNames.reduce(function(found,name){return found||voices.find(function(v){return v.name.includes(name);});},null)||
-              voices.find(function(v){return /female/i.test(v.name);})||
-              voices.find(function(v){return v.lang==='en-US'&&!/(david|mark|alex|daniel|fred|tom|rishi|mohan)/i.test(v.name);})||
-              voices.find(function(v){return v.lang.startsWith('en-')&&!/(david|mark|alex|daniel|fred|tom|rishi)/i.test(v.name);})||
-              voices.find(function(v){return v.lang.startsWith('en');})||voices[0]||null;
-  };
-  window.speechSynthesis.getVoices();
+  // Try immediately (voices may already be loaded — common on desktop)
+  if(_airaPickVoice())return;
+  // onvoiceschanged fires on Chrome/desktop but NOT reliably on iOS Safari
+  window.speechSynthesis.onvoiceschanged=function(){ _airaPickVoice(); };
+  // Polling fallback for iOS — voices load async after a short delay
+  var _poll=0;
+  var _pollId=setInterval(function(){
+    if(_airaPickVoice()||_poll++>20)clearInterval(_pollId);
+  },250);
 }
 initVoices();
 
@@ -3800,55 +3869,68 @@ function airaOpenPayment(){
 // ── MY TRIPS ──────────────────────────────────────────────────
 async function airaLoadTrips(){
   if(!authUser){
-    airaAddMsg('aira','You need to be signed in to view your trips.');
-    var msg=airaAddMsg('aira','');
-    airaAddButtons(msg,[{label:'Sign In',primary:true,action:function(){toggleAira();openAuth();}}]);
+    var msg0=airaAddMsg('aira','You need to be signed in to view your trips.');
+    airaAddButtons(msg0,[{label:'Sign In',primary:true,action:function(){toggleAira();openAuth();}}]);
     return;
   }
   airaState.flow='trips';
   var typing=airaShowTyping();
   try{
     var res=await fetch(FLYYB_API+'/api/trips',{headers:{Authorization:'Bearer '+authToken}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
     var trips=await res.json();
     airaHideTyping();
     airaState.trips=trips;
-    if(!trips.length){
+    if(!Array.isArray(trips)||!trips.length){
       airaAddMsg('aira',"You don't have any trips yet. Ready to book your first flight?");
       airaShowSuggestions(['Search flights']);
       return;
     }
+    var airaSym=getSymbol();
+    var shown=trips.slice(0,5);
     var html='You have <b>'+trips.length+' trip'+(trips.length>1?'s':'')+'</b>:<br><br>';
-    trips.slice(0,4).forEach(function(t,i){
+    shown.forEach(function(t){
       var statusColor=t.status==='confirmed'?'#5daa72':t.status==='cancelled'?'#e8836a':'#4a7fa8';
+      var dateStr=t.date?new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+      var origCode=(t.origin&&t.origin.code)||t.origin||'?';
+      var destCode=(t.destination&&t.destination.code)||t.destination||'?';
+      var depDate=t.date?(t.date+'').split('T')[0]:'';
       html+='<div class="aira-flight-card" style="margin-bottom:8px">'
         +'<div class="aira-flight-row">'
-        +'<div class="aira-flight-times">'+t.origin?.code+' \u2192 '+t.destination?.code+'</div>'
+        +'<div class="aira-flight-times">'+origCode+' → '+destCode+'</div>'
         +'<span style="font-size:.65rem;color:'+statusColor+';background:rgba(255,255,255,.06);padding:2px 8px;border-radius:10px">'+t.status+'</span>'
         +'</div>'
         +'<div class="aira-flight-detail">'
-        +t.flight?.airline?.name+' \u00b7 '
-        +new Date(t.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-        +' \u00b7 Ref: '+t.bookingRef
+        +((t.flight&&t.flight.airline&&t.flight.airline.name)||'')
+        +(dateStr?' · '+dateStr:'')
+        +' · '+t.bookingRef
         +'</div>'
         +(t.status==='confirmed'
           ?'<div class="aira-action-btns" style="margin-top:6px">'
-            +'<button class="aira-action-btn" onclick="airaRescheduleTrip(\''+t.bookingRef+'\',\''+t.date?.split('T')[0]+'\','+t.total+',\''+sym+'\')">Reschedule</button>'
-            +'<button class="aira-action-btn" style="color:var(--rust)" onclick="airaCancelTrip(\''+t.bookingRef+'\')">Cancel</button>'
+            +'<button class="aira-action-btn" onclick="airaRescheduleTrip(\''+t.bookingRef+'\',\''+depDate+'\','+t.total+',\''+airaSym+'\')"">Reschedule</button>'
+            +'<button class="aira-action-btn" style="color:var(--rust)" onclick="airaCancelTrip(\''+t.bookingRef+'\')"">Cancel</button>'
             +'</div>':''
         )
         +'</div>';
     });
-    if(trips.length>4)html+='<div style="font-size:.68rem;color:rgba(245,240,232,.4);margin-top:4px">+'+(trips.length-4)+' more trips</div>';
+    if(trips.length>5){
+      html+='<div style="font-size:.72rem;color:rgba(245,240,232,.5);margin-top:6px;padding:8px;background:rgba(255,255,255,.03);border-radius:4px">'
+        +'+'+(trips.length-5)+' more — <a href="#" onclick="event.preventDefault();toggleAira();openTrips()" style="color:var(--gold)">view all in My Trips</a>'
+        +'</div>';
+    }
     airaAddMsg('aira',html);
-    airaSpeak('Here are your trips.');
-    var msg2=airaAddMsg('aira','What would you like to do?');
+    airaSpeak('Here are your recent trips.');
+    var msg2=airaAddMsg('aira','Tap Reschedule or Cancel on any confirmed booking, or view all trips below.');
     airaAddButtons(msg2,[
-      {label:'View all trips',action:function(){toggleAira();openTrips();}},
+      {label:'View all in My Trips',action:function(){toggleAira();openTrips();}},
       {label:'Book new flight',primary:true,action:function(){airaAddMsg('user','Search flights');airaAddMsg('aira','Sure! Where would you like to fly?');airaState.flow=null;}}
     ]);
   }catch(e){
     airaHideTyping();
-    airaAddMsg('aira','Could not load your trips right now. Please try again!');
+    console.error('airaLoadTrips:',e);
+    airaAddMsg('aira','Could not load trips right now. Please use the My Trips link instead.');
+    var em=airaAddMsg('aira','');
+    airaAddButtons(em,[{label:'Open My Trips',action:function(){toggleAira();openTrips();}}]);
   }
 }
 
